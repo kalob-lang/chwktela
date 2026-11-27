@@ -157,7 +157,6 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
 ## Roadmap
 
 - [x] Home/End/Top/Bottom navigation keys
-- [ ] In Overview Mode, Home navigates to the part with the lowest X coordinate, End navigates to the part with the highest X coordinate
 - [ ] In Editor Mode, part navigation using Select + D-Pad
 - [ ] Add a joystick layer for symbols/numbers
 - [ ] Allow parts to be external links to websites that load in an iframe
