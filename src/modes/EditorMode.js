@@ -29,6 +29,7 @@ export class EditorMode extends TextEntryMode {
         console.log('[EditorMode] Resetting State. Part:', part ? `ID:${part.x},${part.y} Len:${part.content.length}` : 'null');
         if (part) {
             this.typingEngine.reset(part.content);
+            this.typingEngine.state.cursor = part.cursor ?? part.content.length;
             this.lastEngineTextLength = part.content.length;
             this.lastDpad = { up: false, down: false, left: false, right: false };
             this.selectionAnchor = null;
@@ -405,6 +406,7 @@ export class EditorMode extends TextEntryMode {
         }
 
         // Typing Logic
+        this.typingEngine.state.cursor = part.cursor ?? cursor;
         const state = this.typingEngine.processFrame(gamepad);
         if (state) {
             // 1. Handle Explicit Actions

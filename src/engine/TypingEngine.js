@@ -11,6 +11,34 @@ Object.keys(mappingFiles).forEach(path => {
     availableMappings[name] = mappingFiles[path].default || mappingFiles[path];
 });
 
+/**
+ * If value is a 2-glyph mapping containing one non-combining glyph and one combining mark,
+ * return the combining mark. Otherwise return null.
+ */
+export function extractCombiningMarkPair(value) {
+    if (!value) return null;
+    const chars = [...value];
+    if (chars.length !== 2) return null;
+    const isMark0 = /\p{M}/u.test(chars[0]);
+    const isMark1 = /\p{M}/u.test(chars[1]);
+    if (isMark0 === isMark1) return null;
+    return isMark1 ? chars[1] : chars[0];
+}
+
+/**
+ * Return true if the text immediately before the cursor ends with a letter
+ * (skipping over any trailing combining marks attached to that base glyph).
+ */
+export function hasPrecedingLetter(textBeforeCursor) {
+    if (!textBeforeCursor) return false;
+    const chars = [...textBeforeCursor];
+    let i = chars.length - 1;
+    while (i >= 0 && /\p{M}/u.test(chars[i])) {
+        i--;
+    }
+    return i >= 0 && /\p{L}/u.test(chars[i]);
+}
+
 export class TypingEngine {
     constructor() {
         this.mapper = new InputMapper();
@@ -140,13 +168,16 @@ export class TypingEngine {
             // 3. Commit on Release - type the character immediately
             if (lastStick.active && !curStick.active) {
                 if (this.state.pendingChar) {
-                    let char = this.state.pendingChar;
+                    const caseType = this.getCaseModeType();
+                    const bypassPrecedingCheck = (caseType === 'break' && this.state.caseMode > 0);
+                    let char = this.resolveMappedText(this.state.pendingChar, { bypassPrecedingCheck });
 
                     // Apply case
-                    if (this.state.caseMode === 2) {
+                    if (caseType === 'upper' && (this.state.caseMode === 1 || this.state.caseMode === 2)) {
                         char = char.toUpperCase();
-                    } else if (this.state.caseMode === 1) {
-                        char = char.toUpperCase();
+                    }
+
+                    if (this.state.caseMode === 1) {
                         this.consumeShift();
                     }
 
@@ -238,13 +269,30 @@ export class TypingEngine {
         const char = this.state.pendingChar;
         if (!char) return '';
 
-        if (this.state.caseMode === 2) {
-            return char.toUpperCase();
-        }
-        if (this.state.caseMode === 1) {
+        if (this.getCaseModeType() === 'upper' && (this.state.caseMode === 1 || this.state.caseMode === 2)) {
             return char.toUpperCase();
         }
         return char;
+    }
+
+    getCaseModeType() {
+        return this.mappings?.CASE_MODE || 'upper';
+    }
+
+    getTextBeforeCursor() {
+        const text = this.state.text || '';
+        const cursor = (this.state.cursor !== null && this.state.cursor !== undefined)
+            ? this.state.cursor
+            : text.length;
+        return text.slice(0, cursor);
+    }
+
+    resolveMappedText(rawChar, { bypassPrecedingCheck = false } = {}) {
+        const mark = extractCombiningMarkPair(rawChar);
+        if (mark && !bypassPrecedingCheck && hasPrecedingLetter(this.getTextBeforeCursor())) {
+            return mark;
+        }
+        return rawChar;
     }
 
     typeCharacter(char) {
@@ -273,6 +321,7 @@ export class TypingEngine {
 
     reset(text = '') {
         this.state.text = text;
+        this.state.cursor = undefined;
         this.state.pendingChar = null;
         this.state.mode = 'BASE';
         this.state.caseMode = 0;

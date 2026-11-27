@@ -25,8 +25,8 @@ test('TypingEngine switches mappings correctly', () => {
     engine.setMapping('Abugida');
 
     expect(engine.currentMappingName).toBe('Abugida');
-    // Abugida should have same BASE consonants
-    expect(engine.mappings.BASE.LEFT.NORTH).toBe('h');
+    // Abugida uses combining underline carrier on BASE.LEFT.NORTH
+    expect(engine.mappings.BASE.LEFT.NORTH).toBe('◌̲');
 
     // But different punctuation
     expect(engine.mappings.PUNCTUATION.LEFT.NORTH).toBe('ʭ');

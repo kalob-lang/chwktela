@@ -107,6 +107,7 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
     "STARTING_MAIN_NAME": "new",
     "STARTING_PART_NAME": "part one",
     "STAGING_BRACKETS": "⟦⟧",
+    "CASE_MODE": "upper",
     "BASE": {
         "LEFT": {
             "NORTH": "h",
@@ -143,10 +144,15 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
 
 - **STARTING_BOOK_NAME / STARTING_MAIN_NAME / STARTING_PART_NAME**: Default names for new books, main parts, and sub-parts.
 - **STAGING_BRACKETS**: Characters shown around pending input (e.g. `⟦h⟧`).
+- **CASE_MODE**: Controls how toggling case mode with `L3`/`R3` (`0` = default, `1` = next character, `2` = continuous lock) behaves. Defaults to `"upper"` if omitted:
+  - **`"upper"`**: Standard uppercase mode. Converts typed letters in the mapping to uppercase whenever `caseMode` is `1` (single character, `fa-arrow-up` indicator) or `2` (continuous, `fa-circle-up` indicator).
+  - **`"break"`**: Combining-mark break mode. Cancels the preceding-letter check on 2-codepoint normal-glyph + combining-mark mappings so the full 2-codepoint string is entered instead of only the combining mark — once in `caseMode` `1` (`fa-xmark` indicator) and continuously in `caseMode` `2` (`fa-circle-xmark` indicator).
 - **BASE**: Character maps for left and right sticks in default mode.
 - **LEFT_TRIGGER**: Character maps when left trigger is held.
 - **RIGHT_TRIGGER**: Character map for the right stick when right trigger is held.
 - **PUNCTUATION**: Character maps when both triggers are held.
+
+> **Combining-Mark Mappings**: Whenever a mapping entry contains two glyphs where one is a normal glyph and the other is a combining mark (such as `◌̲` or `ı̂`), triggering it enters the full 2-codepoint string when there is no preceding letter, and enters only the combining mark when a preceding letter (including a letter that already has combining marks) immediately precedes the cursor — unless `"CASE_MODE": "break"` is active (`caseMode` `1` or `2`).
 
 ## Roadmap
 

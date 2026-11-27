@@ -3,50 +3,51 @@
     "STARTING_MAIN_NAME": "ċ̱ƨv",
     "STARTING_PART_NAME": "èɽɜ̱ ẽ̱ƞ",
     "STAGING_BRACKETS": "⦇⦈",
+    "CASE_MODE": "break",
     "BASE": {
         "LEFT": {
-            "NORTH": "h",
-            "NORTH_WEST": "y",
-            "NORTH_EAST": "r",
-            "SOUTH_WEST": "n",
-            "SOUTH_EAST": "m",
-            "SOUTH": "l"
+            "NORTH": "◌̲",
+            "NORTH_WEST": "ɥ",
+            "NORTH_EAST": "ɽ",
+            "SOUTH_WEST": "ƞ",
+            "SOUTH_EAST": "q",
+            "SOUTH": "ꞁ"
         },
         "RIGHT": {
-            "NORTH": "q",
-            "NORTH_WEST": "k",
-            "NORTH_EAST": "p",
-            "SOUTH_WEST": "t",
+            "NORTH": "ʊ",
+            "NORTH_WEST": "c",
+            "NORTH_EAST": "e",
+            "SOUTH_WEST": "ʌ",
             "SOUTH_EAST": "s",
-            "SOUTH": "c"
+            "SOUTH": "ɛ"
         }
     },
     "LEFT_TRIGGER": {
         "LEFT": {
             "NORTH": ":",
-            "NORTH_WEST": "i",
+            "NORTH_WEST": "ı̂",
             "NORTH_EAST": ",",
-            "SOUTH_WEST": "x",
-            "SOUTH_EAST": "o",
-            "SOUTH": "a"
+            "SOUTH_WEST": "ı̽",
+            "SOUTH_EAST": "ı̇",
+            "SOUTH": "ı̀"
         },
         "RIGHT": {
             "NORTH": "-",
-            "NORTH_WEST": "v",
+            "NORTH_WEST": "ı̌",
             "NORTH_EAST": "_",
-            "SOUTH_WEST": "e",
-            "SOUTH_EAST": "u",
-            "SOUTH": "w"
+            "SOUTH_WEST": "ı́",
+            "SOUTH_EAST": "ı̈",
+            "SOUTH": "ı̃"
         }
     },
     "RIGHT_TRIGGER": {
         "RIGHT": {
             "NORTH": ".",
-            "NORTH_WEST": "g",
-            "NORTH_EAST": "b",
-            "SOUTH_WEST": "d",
-            "SOUTH_EAST": "z",
-            "SOUTH": "j"
+            "NORTH_WEST": "ↄ",
+            "NORTH_EAST": "ɘ",
+            "SOUTH_WEST": "v",
+            "SOUTH_EAST": "ƨ",
+            "SOUTH": "ɜ"
         }
     },
     "PUNCTUATION": {

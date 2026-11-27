@@ -955,20 +955,7 @@ function loop() {
   inputRouter.route(frameInput, gamepad);
 
   // Update Case Indicator
-  const caseIcon = document.getElementById('case-indicator');
-  if (caseIcon) {
-    const cm = typingEngine.state.caseMode;
-    if (cm === 0) {
-      caseIcon.innerHTML = '<i class="fa-regular fa-circle"></i>';
-      caseIcon.title = 'lowercase';
-    } else if (cm === 1) {
-      caseIcon.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
-      caseIcon.title = 'Shift (next character)';
-    } else if (cm === 2) {
-      caseIcon.innerHTML = '<i class="fa-solid fa-lock"></i>';
-      caseIcon.title = 'CAPS LOCK';
-    }
-  }
+  focusManager.updateCaseIcon(typingEngine.state.caseMode, typingEngine.getCaseModeType());
 
   // Update History (CRITICAL for debounce)
   gamepadManager.updateLastButtons(frameInput);

@@ -85,6 +85,36 @@ export class FocusManager {
         modeIcon.innerHTML = iconHtml;
     }
 
+    updateCaseIcon(caseMode, caseModeType = 'upper') {
+        const caseIcon = document.getElementById('case-indicator');
+        if (!caseIcon) return;
+
+        const modeType = caseModeType === 'break' ? 'break' : 'upper';
+        let iconHtml = '<i class="fa-regular fa-circle"></i>';
+        let title = modeType === 'break' ? 'Combining (normal)' : 'lowercase';
+
+        if (modeType === 'break') {
+            if (caseMode === 1) {
+                iconHtml = '<i class="fa-solid fa-xmark"></i>';
+                title = 'Break (next character)';
+            } else if (caseMode === 2) {
+                iconHtml = '<i class="fa-solid fa-circle-xmark"></i>';
+                title = 'Break Lock';
+            }
+        } else {
+            if (caseMode === 1) {
+                iconHtml = '<i class="fa-solid fa-arrow-up"></i>';
+                title = 'Shift (next character)';
+            } else if (caseMode === 2) {
+                iconHtml = '<i class="fa-solid fa-circle-up"></i>';
+                title = 'CAPS LOCK';
+            }
+        }
+
+        caseIcon.innerHTML = iconHtml;
+        caseIcon.title = title;
+    }
+
     // Deprecated alias for compatibility during refactor, though we should update callers.
     setModifierState(isHeld) {
         this.updateModeIcon('BASE', isHeld);

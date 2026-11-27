@@ -3,6 +3,7 @@
     "STARTING_MAIN_NAME": "khozd",
     "STARTING_PART_NAME": "parjh phwn",
     "STAGING_BRACKETS": "⟦⟧",
+    "CASE_MODE": "upper",
     "BASE": {
         "LEFT": {
             "NORTH": "h",
