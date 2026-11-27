@@ -10,25 +10,13 @@ global.localStorage = {
     clear: vi.fn(),
 };
 
-test('TypingEngine respects empty string as DEFAULT_VOWEL', () => {
+test('TypingEngine types character directly on stick release (no default vowel)', () => {
     const engine = new TypingEngine();
 
-    // Mock Mapping with Empty Default Vowel
-    engine.mappings = {
-        ONSET: {
-            DEFAULT_VOWEL: "",
-            LEFT: {},
-            RIGHT: {}
-        },
-        RIME: { ORDER: ['VOWELS', 'CODA'] },
-        PUNCTUATION: { LEFT: {}, RIGHT: {} }
-    };
-
-    // Set internal state to simulate "Just Released"
-    engine.state.syllable.onset = 't';
-    engine.state.onsetOwner = 'left';
+    // Set internal state to simulate stick held in BASE mode
+    engine.state.pendingChar = 'h';
     engine.lastFrameSticks = {
-        left: { active: true, sector: 'EAST' }, // active previously
+        left: { active: true, sector: 'NORTH' },
         right: { active: false }
     };
 
@@ -39,27 +27,25 @@ test('TypingEngine respects empty string as DEFAULT_VOWEL', () => {
             right: { active: false, x: 0, y: 0 }
         },
         buttons: { dpad: {} },
+        mode: { leftTrigger: false, rightTrigger: false, bothTriggers: false },
         id: "Mock Gamepad",
-        axes: [0, 0, 0, 0] // Required by InputMapper
+        axes: [0, 0, 0, 0]
     };
 
-    // Fix: initialize state.lastInput so handleStickInput doesn't abort
     engine.state.lastInput = {
         sticks: {
-            left: { active: true, sector: 'EAST' },
+            left: { active: true, sector: 'NORTH' },
             right: { active: false }
         },
-        buttons: { dpad: {} }
+        buttons: { dpad: {} },
+        mode: { leftTrigger: false, rightTrigger: false, bothTriggers: false }
     };
 
     let typed = "";
     engine.typeCharacter = (char) => { typed = char; };
-    engine.clearSyllable = () => { };
-    engine.consumeShift = () => { };
 
-    // Run processFrame
     engine.processFrame(input);
 
-    // Expect 't' (onset + empty vowel), NOT 'to' (onset + default fallback 'o')
-    expect(typed).toBe('t');
+    // Expect just 'h', NOT 'ho' (no default vowel appended)
+    expect(typed).toBe('h');
 });

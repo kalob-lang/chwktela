@@ -8,7 +8,6 @@ export class SettingsManager extends SubMenu {
             visualizer: true,
             debug: true,
             deadzone: 0.5,
-            onsetConflict: 'COMMIT',
             visualizerPlacement: 'BOTTOM_CENTER',
             cursorType: 'BAR'
         };
@@ -18,14 +17,13 @@ export class SettingsManager extends SubMenu {
             { key: 'visualizerPlacement', label: 'Vis. Placement', type: 'select', values: ['BOTTOM_CENTER', 'BOTTOM_OUTER', 'TOP_CENTER', 'TOP_OUTER'] },
             { key: 'debug', label: 'Developer Mode', type: 'toggle' },
             { key: 'cursorType', label: 'Cursor Type', type: 'select', values: ['BAR', 'BLOCK', 'UNDERLINE'] },
-            { key: 'onsetConflict', label: 'Onset Conflict', type: 'select', values: ['COMMIT', 'IGNORE', 'SWITCH'] },
             { key: 'done', label: 'Done', type: 'action', className: 'done-btn' }
         ];
     }
 
     loadSettings() {
         try {
-            const saved = localStorage.getItem('crktqla_settings');
+            const saved = localStorage.getItem('cwktela_settings');
             console.log('[SettingsManager] Loading raw settings:', saved);
             if (saved) {
                 const parsed = JSON.parse(saved);
@@ -43,7 +41,7 @@ export class SettingsManager extends SubMenu {
         console.log('[SettingsManager] inside saveSettings function.');
         try {
             const data = JSON.stringify(this.config);
-            localStorage.setItem('crktqla_settings', data);
+            localStorage.setItem('cwktela_settings', data);
             console.log('[SettingsManager] Saved settings to storage:', data);
         } catch (e) {
             console.error('[SettingsManager] Failed to save settings:', e);

@@ -1,14 +1,14 @@
 {
-    "name": "yôn Cuktelo",
-    "short_name": "Cuktelo",
+    "name": "uywng Cwktela",
+    "short_name": "Cwktela",
     "start_url": "./",
     "display": "standalone",
     "background_color": "#1a1a1a",
     "theme_color": "#1a1a1a",
-    "description": "A gamepad-only Hîsyêô text editor.",
+    "description": "A gamepad-only Kalob text editor.",
     "icons": [
         {
-            "src": "/cuktelo.svg",
+            "src": "/cwktela.svg",
             "type": "image/svg+xml",
             "sizes": "512x512"
         }

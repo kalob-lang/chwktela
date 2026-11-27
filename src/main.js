@@ -560,6 +560,13 @@ if (gearBtn) {
       }
     });
   }
+
+  const exportBtn = document.getElementById('export-logs-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('request-export-logs'));
+    });
+  }
 }
 
 settingsManager.onUpdate = (config) => {
@@ -647,7 +654,6 @@ settingsManager.onUpdate = (config) => {
   }
 
   typingEngine.mapper.DEADZONE = config.deadzone;
-  typingEngine.onsetConflictMode = config.onsetConflict;
 
 
   // Refresh Editor to reflect cursor changes immediately
@@ -947,6 +953,22 @@ function loop() {
 
   // --- Input Routing ---
   inputRouter.route(frameInput, gamepad);
+
+  // Update Case Indicator
+  const caseIcon = document.getElementById('case-indicator');
+  if (caseIcon) {
+    const cm = typingEngine.state.caseMode;
+    if (cm === 0) {
+      caseIcon.innerHTML = '<i class="fa-regular fa-circle"></i>';
+      caseIcon.title = 'lowercase';
+    } else if (cm === 1) {
+      caseIcon.innerHTML = '<i class="fa-solid fa-arrow-up"></i>';
+      caseIcon.title = 'Shift (next character)';
+    } else if (cm === 2) {
+      caseIcon.innerHTML = '<i class="fa-solid fa-lock"></i>';
+      caseIcon.title = 'CAPS LOCK';
+    }
+  }
 
   // Update History (CRITICAL for debounce)
   gamepadManager.updateLastButtons(frameInput);

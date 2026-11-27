@@ -33,7 +33,6 @@ describe('SettingsManager', () => {
             visualizer: true,
             debug: true,
             deadzone: 0.5,
-            onsetConflict: 'COMMIT',
             visualizerPlacement: 'BOTTOM_CENTER',
             cursorType: 'BAR'
         }));
@@ -41,7 +40,7 @@ describe('SettingsManager', () => {
 
     it('loads settings from storage on init', () => {
         const saved = JSON.stringify({ visualizer: false, deadzone: 0.2 });
-        localStorage.setItem('crktqla_settings', saved);
+        localStorage.setItem('cwktela_settings', saved);
 
         // Create new instance to trigger load (or call load manually)
         // Constructor doesn't call loadSettings?
@@ -59,7 +58,7 @@ describe('SettingsManager', () => {
         settingsManager.config.visualizer = false;
         settingsManager.saveSettings();
 
-        expect(localStorage.setItem).toHaveBeenCalledWith('crktqla_settings', expect.any(String));
+        expect(localStorage.setItem).toHaveBeenCalledWith('cwktela_settings', expect.any(String));
         const stored = JSON.parse(localStorage.setItem.mock.calls[0][1]);
         expect(stored.visualizer).toBe(false);
     });

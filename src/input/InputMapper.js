@@ -120,13 +120,23 @@ export class InputMapper {
         const ryVal = axisValue(indices.axes.ry);
 
         // Helper to normalize Trigger Axis
+        // Handles two common ranges:
+        //   -1..1 (resting at -1, fully pressed at 1) → normalize to 0..1
+        //   0..1  (resting at 0, fully pressed at 1)  → use raw value
         const readTriggerAxis = (map) => {
             if (map === undefined) return 0;
 
-            // Standard Axis (Number) -> Assume -1..1 range
+            // Standard Axis (Number)
             if (typeof map === 'number') {
                 const raw = axisValue(map);
-                return raw > -1 ? (raw + 1) / 2 : 0;
+                // If raw is near -1, the axis rests at -1 → use (raw+1)/2 mapping
+                // If raw is near 0, the axis rests at 0 → use raw directly
+                // Heuristic: if raw < -0.5, it's a -1..1 range trigger at rest
+                // We use a threshold: values <= -0.5 are treated as resting (-1..1 range)
+                // Otherwise treat as 0..1 range
+                if (raw < -0.5) return 0; // At rest for -1..1 range axes
+                if (raw > -0.5 && raw < 0.0) return 0; // Near-rest dead zone
+                return Math.max(0, Math.min(1, raw)); // 0..1 range, or pressed for -1..1 range
             }
 
             // Complex Axis (Object) -> +aN (0..1) or -aN (0..-1)
@@ -231,16 +241,15 @@ export class InputMapper {
     }
 
     getSector(degrees) {
-        const sectorSize = 45;
-        const offset = sectorSize / 2;
-        if (degrees >= 360 - offset || degrees < 0 + offset) return 'NORTH';
-        if (degrees >= 45 - offset && degrees < 45 + offset) return 'NORTH_EAST';
-        if (degrees >= 90 - offset && degrees < 90 + offset) return 'EAST';
-        if (degrees >= 135 - offset && degrees < 135 + offset) return 'SOUTH_EAST';
-        if (degrees >= 180 - offset && degrees < 180 + offset) return 'SOUTH';
-        if (degrees >= 225 - offset && degrees < 225 + offset) return 'SOUTH_WEST';
-        if (degrees >= 270 - offset && degrees < 270 + offset) return 'WEST';
-        if (degrees >= 315 - offset && degrees < 315 + offset) return 'NORTH_WEST';
+        // 6 sectors, 60° each, centered on N/NE/SE/S/SW/NW
+        const sectorSize = 60;
+        const offset = sectorSize / 2; // 30°
+        if (degrees >= 360 - offset || degrees < 0 + offset) return 'NORTH';        // 330°–30°
+        if (degrees >= 60 - offset && degrees < 60 + offset) return 'NORTH_EAST';    // 30°–90°
+        if (degrees >= 120 - offset && degrees < 120 + offset) return 'SOUTH_EAST';  // 90°–150°
+        if (degrees >= 180 - offset && degrees < 180 + offset) return 'SOUTH';       // 150°–210°
+        if (degrees >= 240 - offset && degrees < 240 + offset) return 'SOUTH_WEST';  // 210°–270°
+        if (degrees >= 300 - offset && degrees < 300 + offset) return 'NORTH_WEST';  // 270°–330°
         return null;
     }
 }

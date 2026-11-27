@@ -130,7 +130,7 @@ describe('EditorMode', () => {
             // EditorMode checks `this.isModifierHeld = frameInput.buttons.north` at start.
             // Then checks `if (this.isModifierHeld ...)`
 
-            mocks.typingEngine.state.mode = 'ONSET'; // Required for paste check
+            mocks.typingEngine.state.mode = 'BASE'; // Required for paste check
 
             const frameInput = {
                 buttons: { dpad: {}, north: true, l3: true }

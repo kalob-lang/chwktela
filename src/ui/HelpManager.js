@@ -7,9 +7,9 @@ export class HelpManager {
         // Define Slides
         this.slides = [
             {
-                title: "Welcome to yôn Cuktelo",
+                title: "Welcome to uywng Cwktela",
                 text: `
-                    <p>yôn Cuktelo is a grid-based writing environment designed for writing Hîsyêô without a keyboard.</p>
+                    <p>uywng Cwktela is a grid-based writing environment designed for writing Kalob without a keyboard.</p>
                     <p>Use the <strong>Overview Mode</strong> to navigate the infinite grid of 'parts'.</p>
                     <p>Use the <strong>Editor Mode</strong> to write content within a part.</p>
                     <p>Press <i class="fa-solid fa-square-caret-right icon-grey"></i> <strong>Start</strong> to focus on the gutter menu.</p>
@@ -33,23 +33,22 @@ export class HelpManager {
             {
                 title: "Part Editing",
                 text: `
-                    <h3>Onset Mode</h3>
-                    <p>The left joystick selects from H, K, T, C, F, S, N, L.</p>
-                    <p>The right joystick selects from Y, G, D, Z, B, X, M, W.</p>
-                    <p>Release the joystick will place the selected onset and the vowel 'o'.</p>
+                    <h3>Base Mode</h3>
+                    <p>The left joystick selects from H, Y, R, N, M, L.</p>
+                    <p>The right joystick selects from Q, K, P, T, S, C.</p>
+                    <p>Release the joystick to type the selected character.</p>
 
-                    <h3>Rime Mode</h3>
-                    <p>Instead of using the default vowel 'o', you can use Rime Mode to select a different vowel and coda.</p>
+                    <h3>Left Trigger Mode</h3>
+                    <p>Hold the <strong>LT</strong> trigger to access vowels and additional characters.</p>
                     <br/>
-                    <p>Hold the <strong>LT</strong> trigger to enter Rime Mode Left.</p>
-                    <p>The left joystick selects a vowel (i, û, u, ô, o, ê, e, î).</p>
-                    <p>The right joystick selects a coda (-k, -t, -c, -n, -l.)</p>
-                    <p>Release the joystick will place the selected rime.</p>
+                    <p>The left joystick selects: :, i, comma, x, o, a.</p>
+                    <p>The right joystick selects: -, v, _, e, u, w.</p>
+
+                    <h3>Right Trigger Mode</h3>
+                    <p>Hold the <strong>RT</strong> trigger. Only the right stick changes.</p>
                     <br/>
-                    <p>Hold the <strong>RT</strong> trigger to enter Rime Mode Right.</p>
-                    <p>The left joystick selects a coda (-k, -t, -c, -n, -l.)</p>
-                    <p>The right joystick selects a vowel (i, û, u, ô, o, ê, e, î).</p>
-                    <p>Release the joystick will place the selected rime.</p>
+                    <p>The right joystick selects: ., g, b, d, z, j.</p>
+                    <p>The left joystick stays on base consonants (H, Y, R, N, M, L).</p>
                     
                     <h3>Shortcuts</h3>
                     <p><i class="fa-solid fa-a icon-green"></i>: Space</p>
@@ -57,6 +56,19 @@ export class HelpManager {
                     <p><i class="fa-solid fa-x icon-blue"></i>: Delete Forward</p>
                     <p><i class="fa-solid fa-y icon-yellow"></i>: Shift/Ctrl Mode</p>
                     <p><strong>L3/R3</strong>: Shift / Caps Lock (Toggle)</p>
+                    <p><strong>L2</strong>: Backspace</p>
+                    <p><strong>R2</strong>: Tab</p>
+
+                    <h3>Modifier Shortcuts</h3>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <i class="fa-solid fa-arrows-left-right icon-purple"></i> Left: Word Left</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <i class="fa-solid fa-arrows-left-right icon-purple"></i> Right: Word Right</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <i class="fa-solid fa-arrows-up-down icon-purple"></i> Up: Home / Top of Part</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <i class="fa-solid fa-arrows-up-down icon-purple"></i> Down: End / Bottom of Part</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <strong>L2</strong>: Delete Word Backwards</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <strong>L3/R3</strong>: Paste from Clipboard</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <strong>RB</strong>: Enter Visual Select Mode</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <strong>LT</strong>: Undo</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i> + <strong>RT</strong>: Redo</p>
                 `
             },
             {
@@ -74,22 +86,20 @@ export class HelpManager {
 
                     <h3>Changing Citations</h3>
                     <p>In Editor, move your cursor to a citation.</p>
-                    <p>Hold <i class="fa-solid fa-y icon-yellow"></i> and press <i class="fa-solid fa-b icon-red"></i> to follow the citation.</p>
-                    <p>The camera will fly to the target location.</p>
-                    <p>The previous citation will be highlighted in yellow.
-                    <p>Move your cursor to a new citation and press <i class="fa-solid fa-b icon-red"></i> to change the citation.</p>
-
-                    <h3>Deleting Citations</h3>
-                    <p>Delete the citation just like any other character.</p>
+                    <p>Hold <i class="fa-solid fa-y icon-yellow"></i> and press <i class="fa-solid fa-a icon-green"></i> to update the citation.</p>
+                    <p>The view will switch to Overview. Navigate to the new target and press <i class="fa-solid fa-a icon-green"></i> to confirm.</p>
                 `
             },
             {
                 title: "Visual Select Mode",
                 text: `
+                    <h3>Entering</h3>
+                    <p>Hold <i class="fa-solid fa-y icon-yellow"></i> + <strong>RB</strong> in Editor Mode to enter Visual Select.</p>
+
                     <h3>Selection</h3>
-                    <p>Hold <i class="fa-solid fa-y icon-yellow"></i> and press <strong>RB</strong> to enter Visual Select Mode.</p>
-                    <p>Use <i class="fa-solid fa-arrows-up-down-left-right icon-purple"></i> to expand selection.</p>
-                    
+                    <p>Use the <i class="fa-solid fa-arrows-up-down-left-right icon-purple"></i> to expand and move the selection anchor.</p>
+                    <p>Hold <i class="fa-solid fa-y icon-yellow"></i> + D-Pad for word-based selection jumps.</p>
+
                     <h3>Actions</h3>
                     <p><i class="fa-solid fa-a icon-green"></i>: Copy</p>
                     <p><i class="fa-solid fa-x icon-blue"></i>: Cut / Delete</p>
@@ -108,7 +118,6 @@ export class HelpManager {
         this.render();
 
         if (this.isOpen) {
-            // this.focusManager.setMode('HELP'); // Removed to prevent history pollution
             this.debounceCounter = 15; // Ignore input for 15 frames
             if (initialInput && initialInput.buttons) {
                 this.lastButtons = { ...initialInput.buttons };
@@ -129,7 +138,6 @@ export class HelpManager {
 
         if (this.debounceCounter > 0) {
             this.debounceCounter--;
-            // Capture state during debounce to prevent "just pressed" triggers immediately after
             this.lastButtons = { ...input.buttons };
             this.lastDpad = { ...input.buttons.dpad };
             return;

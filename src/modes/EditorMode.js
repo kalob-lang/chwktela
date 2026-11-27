@@ -233,7 +233,7 @@ export class EditorMode extends TextEntryMode {
         }
 
         if (this.isModifierHeld) {
-            // Override with Word Nav
+            // Override with Word Nav (Left/Right)
             if (navLeft) {
                 cursor = this.navigateWordLeft(part.cursor, content);
                 handledNav = true;
@@ -243,7 +243,31 @@ export class EditorMode extends TextEntryMode {
                 handledNav = true;
                 this.updateGoalColumn(content, cursor);
             }
-            // Page Up/Down could go here too if we want overrides
+
+            // Home/End + Top/Bottom (Up/Down)
+            if (justPressed('up')) {
+                const info = this.getLineInfo(content, part.cursor);
+                if (part.cursor === info.start) {
+                    // Already at line start → jump to top of part
+                    cursor = 0;
+                } else {
+                    // Move to beginning of current line
+                    cursor = info.start;
+                }
+                handledNav = true;
+                this.updateGoalColumn(content, cursor);
+            } else if (justPressed('down')) {
+                const info = this.getLineInfo(content, part.cursor);
+                if (part.cursor === info.end) {
+                    // Already at line end → jump to bottom of part
+                    cursor = content.length;
+                } else {
+                    // Move to end of current line
+                    cursor = info.end;
+                }
+                handledNav = true;
+                this.updateGoalColumn(content, cursor);
+            }
         }
 
 
@@ -356,7 +380,7 @@ export class EditorMode extends TextEntryMode {
             if ((frameInput.buttons.l3 && !lastBtns.l3) ||
                 (frameInput.buttons.r3 && !lastBtns.r3)) {
 
-                if (this.typingEngine.state.mode === 'ONSET') {
+                if (this.typingEngine.state.mode === 'BASE') {
                     // Dispatch Global Paste? 
                     // Ideally duplicate handlePaste, but for now we assume handlePaste is not strictly local.
                     // Refactor Note: handlePaste logic should also be moved or exposed?
@@ -450,7 +474,7 @@ export class EditorMode extends TextEntryMode {
                 }
 
                 this.renderer.render(part, this.selectionAnchor);
-                this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings, this.typingEngine.state.syllable);
+                this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings);
                 // break equivalent (return from fn)
                 return;
             }
@@ -498,7 +522,7 @@ export class EditorMode extends TextEntryMode {
 
 
 
-            this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings, this.typingEngine.state.syllable);
+            this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings);
 
             // Sync Icon
             const isJoystickActive = frameInput.sticks?.left?.active || false;

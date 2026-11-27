@@ -38,7 +38,7 @@ describe('Clipboard Integration', () => {
             reset: vi.fn(),
             processFrame: vi.fn(),
             resetInputState: vi.fn(),
-            state: { mode: 'ONSET' },
+            state: { mode: 'BASE' },
             getFormattedSyllable: vi.fn().mockReturnValue(''),
             mappings: {}
         };

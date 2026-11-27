@@ -14,8 +14,8 @@ export class Visualizer {
     }
 
     createRadialSegments(joyElement, side) {
-        // 8 segments
-        const sectors = ['NORTH', 'NORTH_EAST', 'EAST', 'SOUTH_EAST', 'SOUTH', 'SOUTH_WEST', 'WEST', 'NORTH_WEST'];
+        // 6 sectors at 60° intervals
+        const sectors = ['NORTH', 'NORTH_EAST', 'SOUTH_EAST', 'SOUTH', 'SOUTH_WEST', 'NORTH_WEST'];
 
         // Create a container for the segments (background)
         const segmentContainer = document.createElement('div');
@@ -31,8 +31,6 @@ export class Visualizer {
             const label = document.createElement('span');
             label.className = 'segment-label';
 
-            // Cache finding the label? Or just the segment?
-            // Storing object { el: seg, label: label, sector: sector } is best.
             const segmentObj = { el: seg, label: label, sector: sector };
 
             seg.appendChild(label);
@@ -73,18 +71,20 @@ export class Visualizer {
 
         // Update Labels based on mapping
         let currentMap = null;
-        if (mode === 'ONSET') {
-            currentMap = mappings.ONSET[side.toUpperCase()];
-        } else if (mode === 'RIME_LEFT') {
-            if (side === 'left') currentMap = mappings.RIME.VOWELS;
-            if (side === 'right') currentMap = mappings.RIME.CODA;
-        } else if (mode === 'RIME_RIGHT') {
-            if (side === 'right') currentMap = mappings.RIME.VOWELS;
-            if (side === 'left') currentMap = mappings.RIME.CODA;
+        if (mode === 'BASE') {
+            currentMap = mappings.BASE?.[side.toUpperCase()];
+        } else if (mode === 'LEFT_TRIGGER') {
+            currentMap = mappings.LEFT_TRIGGER?.[side.toUpperCase()];
+        } else if (mode === 'RIGHT_TRIGGER') {
+            if (side === 'right') {
+                currentMap = mappings.RIGHT_TRIGGER?.RIGHT;
+            } else {
+                // Left stick stays on BASE in RIGHT_TRIGGER mode
+                currentMap = mappings.BASE?.LEFT;
+            }
         } else if (mode === 'PUNCTUATION') {
-            currentMap = mappings.PUNCTUATION[side.toUpperCase()];
+            currentMap = mappings.PUNCTUATION?.[side.toUpperCase()];
         }
-
 
         if (currentMap) {
             for (const seg of segments) {

@@ -110,7 +110,7 @@ export class RenamingMode extends TextEntryMode {
 
             // 9. Update Visualizer
             if (this.visualizer) {
-                this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings, this.typingEngine.state.syllable);
+                this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings);
             }
         } else {
             this.renderIfChanged(this.editorRenderer, txt, cur);

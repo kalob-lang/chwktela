@@ -5,7 +5,6 @@ import { test, expect, vi, beforeAll } from 'vitest';
 import { TypingEngine } from '../src/engine/TypingEngine.js';
 
 beforeAll(() => {
-    // Simple Mock for LocalStorage if jsdom doesn't fully satisfy logic or to be explicit
     global.localStorage = {
         getItem: vi.fn(),
         setItem: vi.fn(),
@@ -19,19 +18,17 @@ test('TypingEngine switches mappings correctly', () => {
 
     // Default should be Latin
     expect(engine.currentMappingName).toBe('Latin');
-    expect(engine.mappings.ONSET.DEFAULT_VOWEL).toBe('o');
+    // New format: BASE instead of ONSET
+    expect(engine.mappings.BASE.LEFT.NORTH).toBe('h');
 
-    // Switch to Hisyakui
-    engine.setMapping('Hisyakui');
+    // Switch to Abugida
+    engine.setMapping('Abugida');
 
-    expect(engine.currentMappingName).toBe('Hisyakui');
-    expect(engine.mappings.ONSET.DEFAULT_VOWEL).toBe('');
+    expect(engine.currentMappingName).toBe('Abugida');
+    // Abugida should have same BASE consonants
+    expect(engine.mappings.BASE.LEFT.NORTH).toBe('h');
 
-    // Check RIME VOWELS
-    // Latin 'NORTH': 'i'
-    // Hisyakui 'NORTH': 'ȷ'
-    console.log('Hisyakui RIME NORTH:', engine.mappings.RIME.VOWELS.NORTH);
-
-    expect(engine.mappings.RIME.VOWELS.NORTH).toBe('j');
-    expect(engine.mappings.RIME.VOWELS.NORTH).not.toBe('i'); // Should NOT be Latin
+    // But different punctuation
+    expect(engine.mappings.PUNCTUATION.LEFT.NORTH).toBe('ʭ');
+    expect(engine.mappings.PUNCTUATION.LEFT.NORTH).not.toBe(';'); // Should NOT be Latin
 });

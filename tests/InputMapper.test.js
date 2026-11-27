@@ -42,38 +42,46 @@ describe('InputMapper', () => {
         });
 
         it('calculates correct angles', () => {
-            // Up (y = -1 in gamepads usually? Wait, standards vary. Let's assume standard unit circle math first)
-            // processStick math: atan2(y, x). 
             // In browser Gamepad API:
             // Axis 1 (Left Stick Y): Negative = Up, Positive = Down.
             // Axis 0 (Left Stick X): Negative = Left, Positive = Right.
 
-            // Let's test "Up" (x=0, y=-1)
+            // Up (x=0, y=-1)
             const up = mapper.processStick(0, -1);
             expect(up.active).toBe(true);
-            // atan2(-1, 0) = -PI/2 (-90 deg)
-            // degrees = -90 * (180/PI) = -90
-            // degrees += 90 = 0
-            // 0 -> NORTH
+            // atan2(-1, 0) = -PI/2 -> deg = -90 + 90 = 0 -> NORTH
             expect(up.sector).toBe('NORTH');
 
             // Right (x=1, y=0)
             const right = mapper.processStick(1, 0);
-            // atan2(0, 1) = 0
-            // deg = 0 + 90 = 90 -> EAST
-            expect(right.sector).toBe('EAST');
+            // atan2(0, 1) = 0 -> deg = 0 + 90 = 90
+            // 90° is the boundary between NORTH_EAST (30-90) and SOUTH_EAST (90-150)
+            // At exactly 90°: NORTH_EAST check is >= 30 && < 90 -> false (90 is not < 90)
+            // SOUTH_EAST check is >= 90 && < 150 -> true
+            expect(right.sector).toBe('SOUTH_EAST');
 
             // Down (x=0, y=1)
             const down = mapper.processStick(0, 1);
-            // atan2(1, 0) = PI/2 (90)
-            // deg = 90 + 90 = 180 -> SOUTH
+            // atan2(1, 0) = PI/2 -> deg = 90 + 90 = 180 -> SOUTH
             expect(down.sector).toBe('SOUTH');
 
             // Left (x=-1, y=0)
             const left = mapper.processStick(-1, 0);
-            // atan2(0, -1) = PI (180)
-            // deg = 180 + 90 = 270 -> WEST
-            expect(left.sector).toBe('WEST');
+            // atan2(0, -1) = PI -> deg = 180 + 90 = 270
+            // 270° is the boundary between SOUTH_WEST (210-270) and NORTH_WEST (270-330)
+            // SOUTH_WEST: >= 210 && < 270 -> false (270 is not < 270)
+            // NORTH_WEST: >= 270 && < 330 -> true
+            expect(left.sector).toBe('NORTH_WEST');
+
+            // NE diagonal (x=0.7, y=-0.7)
+            const ne = mapper.processStick(0.7, -0.7);
+            // atan2(-0.7, 0.7) = -PI/4 -> deg = -45 + 90 = 45 -> NORTH_EAST (30-90)
+            expect(ne.sector).toBe('NORTH_EAST');
+
+            // SW diagonal (x=-0.7, y=0.7)
+            const sw = mapper.processStick(-0.7, 0.7);
+            // atan2(0.7, -0.7) = 3PI/4 -> deg = 135 + 90 = 225 -> SOUTH_WEST (210-270)
+            expect(sw.sector).toBe('SOUTH_WEST');
         });
     });
 

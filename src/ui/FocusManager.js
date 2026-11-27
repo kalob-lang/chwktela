@@ -63,7 +63,7 @@ export class FocusManager {
         let iconHtml = '<i class="fa-solid fa-border-none"></i>';
 
         switch (typingMode) {
-            case 'ONSET':
+            case 'BASE':
                 if (onsetSelectionInProgress) {
                     iconHtml = '<i class="fa-regular fa-square"></i>';
                 } else {
@@ -72,10 +72,10 @@ export class FocusManager {
                         : '<i class="fa-solid fa-border-none"></i>';
                 }
                 break;
-            case 'RIME_LEFT':
+            case 'LEFT_TRIGGER':
                 iconHtml = '<i class="fa-solid fa-square-caret-left"></i>';
                 break;
-            case 'RIME_RIGHT':
+            case 'RIGHT_TRIGGER':
                 iconHtml = '<i class="fa-solid fa-square-caret-right"></i>';
                 break;
             case 'PUNCTUATION':
@@ -87,6 +87,6 @@ export class FocusManager {
 
     // Deprecated alias for compatibility during refactor, though we should update callers.
     setModifierState(isHeld) {
-        this.updateModeIcon('ONSET', isHeld);
+        this.updateModeIcon('BASE', isHeld);
     }
 }

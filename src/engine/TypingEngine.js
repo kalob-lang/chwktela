@@ -15,7 +15,7 @@ export class TypingEngine {
     constructor() {
         this.mapper = new InputMapper();
         this.state = {
-            mode: 'ONSET',
+            mode: 'BASE',
             text: '',
 
             // Case: 0=lower, 1=shift (next char), 2=caps (lock)
@@ -24,18 +24,9 @@ export class TypingEngine {
             // Actions (consumed by main loop)
             action: null,
 
-            // Syllable Construction Buffer
-            syllable: {
-                onset: null,
-                vowel: null,
-                coda: null
-            },
-
             // Tracking
             lastInput: null,
             pendingChar: null,
-            pendingStick: null,
-            onsetOwner: null,
 
             // Debounce / Dwell State
             leftStick: { sector: null, enterTime: 0, locked: false },
@@ -45,7 +36,6 @@ export class TypingEngine {
         };
 
         this.DWELL_THRESHOLD = 60;
-        this.onsetConflictMode = 'COMMIT'; // Default
 
         // Load default mapping (Latin) or fallback to first available
         this.currentMappingName = 'Latin';
@@ -77,31 +67,17 @@ export class TypingEngine {
         if (!input) return null;
 
         // Detect Mode Transition
-        let newMode = 'ONSET';
+        let newMode = 'BASE';
         if (input.mode.bothTriggers) {
             newMode = 'PUNCTUATION';
         } else if (input.mode.leftTrigger) {
-            newMode = 'RIME_LEFT';
+            newMode = 'LEFT_TRIGGER';
         } else if (input.mode.rightTrigger) {
-            newMode = 'RIME_RIGHT';
+            newMode = 'RIGHT_TRIGGER';
         }
 
         // Handle Mode Change logic (Triggers)
         if (this.state.mode !== newMode) {
-            const exitingRime = (newMode === 'ONSET' && (this.state.mode === 'RIME_LEFT' || this.state.mode === 'RIME_RIGHT'));
-
-            // Commit buffer on Rime Exit
-            if (exitingRime) {
-                // Get formatted text (Handles Case)
-                let result = this.getFormattedSyllable();
-
-                if (result.length > 0) {
-                    this.typeCharacter(result);
-                    this.consumeShift();
-                }
-                this.clearSyllable();
-            }
-
             this.state.mode = newMode;
             this.state.modeSwitchTime = Date.now(); // Record switch time
             logger.log('MODE', `Switched to ${newMode}`);
@@ -119,11 +95,12 @@ export class TypingEngine {
 
         const now = Date.now();
 
-        // whichPart: 'onset', 'vowel', 'coda'
-        const processStick = (stickName, whichPart, map) => {
+        const processStick = (stickName, map) => {
+            if (!map) return; // No mapping for this stick in this mode
+
             const curStick = current.sticks[stickName];
             const lastStick = this.lastFrameSticks[stickName] || { active: false, sector: null, enterTime: 0 };
-            const stickState = this.state[`${stickName}Stick`]; // Internal state tracking (lock, enterTime)
+            const stickState = this.state[`${stickName}Stick`];
 
             // 1. Dwell / Active Handling
             if (!curStick.active) {
@@ -132,7 +109,7 @@ export class TypingEngine {
             }
             if (stickState.locked) return; // Ignore if locked
 
-            // 1. Sector Stability Check
+            // 2. Sector Stability Check
             if (curStick.active && curStick.sector) {
                 if (stickState.sector !== curStick.sector) {
                     // Entered new sector
@@ -146,70 +123,10 @@ export class TypingEngine {
                     // Only act if held > threshold
                     if (holdDuration > this.DWELL_THRESHOLD) {
                         // Filter: If we held this stick BEFORE the last mode switch, ignore it.
-                        // This forces a "fresh" press for the new mode.
                         if (stickState.enterTime > this.state.modeSwitchTime) {
-
-                            // CONFLICT RESOLUTION (ONSET MODE ONLY)
-                            if (this.state.mode === 'ONSET' && whichPart === 'onset') {
-                                const otherStickName = stickName === 'left' ? 'right' : 'left';
-                                const otherStickState = this.state[`${otherStickName}Stick`]; // Internal state
-                                const otherStickInput = current.sticks[otherStickName]; // Raw input from CURRENT frame
-
-                                // Is the OTHER stick currently active and holding a value?
-                                // We check `this.state.syllable.onset` because that's where the *current* onset is stored.
-                                // If it's null, there's no conflict to resolve yet.
-                                if (otherStickInput && otherStickInput.active && !otherStickState.locked && this.state.syllable.onset) {
-                                    // We have a conflict. User is holding one stick (with onset) and pressing another.
-
-                                    // Check if we are the "new" stick?
-                                    // Compare enterTimes.
-                                    if (stickState.enterTime > otherStickState.enterTime) {
-                                        // We are the NEW interaction.
-
-                                        // BOUNCE PROTECTION: If we already own the onset, this is likely a bounce.
-                                        // Ignoring self-conflicts saves "nono" double-types.
-                                        if (this.state.onsetOwner === stickName) {
-                                            logger.log('CONFLICT_SELF', `Ignored bounce for ${stickName} (Owner)`);
-                                            return;
-                                        }
-
-                                        logger.log('CONFLICT', `New: ${stickName}, Old: ${otherStickName}. Mode: ${this.onsetConflictMode}`);
-
-                                        if (this.onsetConflictMode === 'IGNORE') {
-                                            return; // Ignore this new stick
-                                        }
-                                        else if (this.onsetConflictMode === 'COMMIT') {
-                                            // Commit the EXISTING syllable (from other stick)
-                                            const defVowel = (this.mappings.ONSET.DEFAULT_VOWEL !== undefined) ? this.mappings.ONSET.DEFAULT_VOWEL : 'o';
-                                            logger.log('CONFLICT_COMMIT', `Committed ${this.state.syllable.onset}${defVowel}`);
-                                            this.typeCharacter(this.state.syllable.onset + defVowel);
-                                            this.clearSyllable();
-                                            this.consumeShift();
-
-                                            // LOCK the other stick so it doesn't re-trigger immediately
-                                            otherStickState.locked = true;
-                                            otherStickState.sector = null;
-                                            logger.log('LOCK', `${otherStickName} Locked`);
-                                        }
-                                        else if (this.onsetConflictMode === 'SWITCH') {
-                                            // Clear the buffer (discard old onset)
-                                            logger.log('CONFLICT_SWITCH', `Switched to ${stickName}`);
-                                            this.clearSyllable();
-                                            // Allow this stick to take over.
-                                        }
-                                    }
-                                }
-                            }
-
                             const char = map[curStick.sector];
                             if (char) {
-                                // Update the specific part of the syllable buffer
-                                this.state.syllable[whichPart] = char;
-
-                                // Set Owner for Onset
-                                if (whichPart === 'onset') {
-                                    this.state.onsetOwner = stickName;
-                                }
+                                this.state.pendingChar = char;
                             }
                         }
                     }
@@ -218,48 +135,45 @@ export class TypingEngine {
                 // Stick inactive
                 stickState.sector = null;
                 stickState.enterTime = 0;
-
-                if (this.state.mode.startsWith('RIME')) {
-                    this.state.syllable[whichPart] = null;
-                }
             }
 
-            // 2. Commit on Release (ONSET ONLY)
-            if (lastStick.active && !curStick.active && this.state.mode === 'ONSET' && whichPart === 'onset') {
+            // 3. Commit on Release - type the character immediately
+            if (lastStick.active && !curStick.active) {
+                if (this.state.pendingChar) {
+                    let char = this.state.pendingChar;
 
-                // Only commit if WE own the onset
-                if (this.state.syllable.onset && this.state.onsetOwner === stickName) {
-                    let text = this.getFormattedSyllable();
-                    const defVowel = (this.mappings.ONSET.DEFAULT_VOWEL !== undefined) ? this.mappings.ONSET.DEFAULT_VOWEL : 'o';
-                    this.typeCharacter(text + defVowel);
-                    this.clearSyllable();
-                    this.consumeShift();
+                    // Apply case
+                    if (this.state.caseMode === 2) {
+                        char = char.toUpperCase();
+                    } else if (this.state.caseMode === 1) {
+                        char = char.toUpperCase();
+                        this.consumeShift();
+                    }
+
+                    this.typeCharacter(char);
+                    this.state.pendingChar = null;
+                    stickState.locked = true;
                 }
             }
         };
 
-        if (this.state.mode === 'ONSET') {
-            processStick('left', 'onset', this.mappings.ONSET.LEFT);
-            processStick('right', 'onset', this.mappings.ONSET.RIGHT);
-            // In onset, vowels/codas should be null
-            this.state.syllable.vowel = null;
-            this.state.syllable.coda = null;
+        // Determine maps based on current mode
+        if (this.state.mode === 'BASE') {
+            processStick('left', this.mappings.BASE?.LEFT);
+            processStick('right', this.mappings.BASE?.RIGHT);
         }
-        else if (this.state.mode === 'RIME_LEFT') {
-            processStick('left', 'vowel', this.mappings.RIME.VOWELS);
-            processStick('right', 'coda', this.mappings.RIME.CODA);
+        else if (this.state.mode === 'LEFT_TRIGGER') {
+            processStick('left', this.mappings.LEFT_TRIGGER?.LEFT);
+            processStick('right', this.mappings.LEFT_TRIGGER?.RIGHT);
         }
-        else if (this.state.mode === 'RIME_RIGHT') {
-            processStick('right', 'vowel', this.mappings.RIME.VOWELS);
-            processStick('left', 'coda', this.mappings.RIME.CODA);
+        else if (this.state.mode === 'RIGHT_TRIGGER') {
+            // Left stick stays on BASE, right stick uses RIGHT_TRIGGER
+            processStick('left', this.mappings.BASE?.LEFT);
+            processStick('right', this.mappings.RIGHT_TRIGGER?.RIGHT);
         }
         else if (this.state.mode === 'PUNCTUATION') {
-            // Punctuation is instant? Or buffered?
-            // Assuming instant/buffered logic similar to onset for now, or just direct type.
-            // Let's use direct type for punctuation to keep it simple unless specified.
-            // Actually, let's use the 'onset' slot to buffer punctuation char, commit on release.
-            processStick('left', 'onset', this.mappings.PUNCTUATION.LEFT);
-            processStick('right', 'onset', this.mappings.PUNCTUATION.RIGHT);
+            processStick('left', this.mappings.PUNCTUATION?.LEFT);
+            processStick('right', this.mappings.PUNCTUATION?.RIGHT);
         }
 
         // IMPORTANT: Update state for next frame
@@ -289,18 +203,14 @@ export class TypingEngine {
         // LB (Left Shoulder): Backspace / Ctrl+Backspace
         if (pressed('lb')) {
             if (holdingModifier) {
-                // Ctrl+Backspace (Word Left)
-                // We set a flag because TypingEngine doesn't know about words/cursor context fully
                 this.state.action = 'DELETE_WORD_LEFT';
             } else {
-                // Standard Backspace
                 this.deleteCharacter();
             }
         }
 
         // X (West): Delete (Forward)
         if (pressed('west')) {
-            // Delete Forward
             this.state.action = 'DELETE_FORWARD';
         }
 
@@ -317,64 +227,24 @@ export class TypingEngine {
         // Case Switching (L3/R3)
         if (pressed('l3') || pressed('r3')) {
             this.state.caseMode = (this.state.caseMode + 1) % 3;
-            // console.log("Case Mode:", ['LOWER', 'SHIFT', 'CAPS'][this.state.caseMode]);
-            this.forceUpdateBuffer();
         }
     }
 
-    forceUpdateBuffer() {
-        // Re-process active sticks to apply new case
-        // We can just call handleStickInput again? Or manually update buffer from sticks.
-        ['left', 'right'].forEach(name => {
-            const stick = this.state.lastInput?.sticks[name];
-            if (stick && stick.active && stick.sector && this.state[`${name}Stick`].sector === stick.sector) {
-                // Re-read map and apply case
-                // We need the map... redundant logic. 
-                // For now, let's assume the user moves slightly or we accept it updates on next move.
-                // Actually, let's try to implement applyCase in handleStickInput.
-            }
-        });
-    }
-
+    /**
+     * Get the currently pending character (for display in the staging area).
+     * Returns the pending char with case applied, or empty string.
+     */
     getFormattedSyllable() {
-        const s = this.state.syllable;
-        const mode = this.state.caseMode;
+        const char = this.state.pendingChar;
+        if (!char) return '';
 
-        let onset = s.onset || '';
-        let vowel = s.vowel || '';
-        let coda = s.coda || '';
-
-        // If nothing in buffer, return empty
-        if (!onset && !vowel && !coda) return '';
-
-        // Determine Order
-        const rimeConfig = this.mappings.RIME || {};
-        const order = rimeConfig.ORDER || rimeConfig.INSERT_ORDER || ['VOWELS', 'CODA'];
-
-        let rimePart = '';
-        if (order[0] === 'CODA') {
-            rimePart = coda + vowel;
-        } else {
-            rimePart = vowel + coda;
+        if (this.state.caseMode === 2) {
+            return char.toUpperCase();
         }
-
-        let fullSyllable = onset + rimePart;
-
-        // --- CASE HANDLING ---
-
-        if (mode === 2) { // CAPS LOCK
-            return fullSyllable.toUpperCase();
+        if (this.state.caseMode === 1) {
+            return char.toUpperCase();
         }
-
-        if (mode === 1) { // SHIFT (Title Case)
-            // Title case the FIRST character of the constructed syllable
-            if (fullSyllable.length > 0) {
-                return fullSyllable.charAt(0).toUpperCase() + fullSyllable.slice(1);
-            }
-        }
-
-        // LOWER
-        return fullSyllable;
+        return char;
     }
 
     typeCharacter(char) {
@@ -397,19 +267,14 @@ export class TypingEngine {
         }
     }
 
-    clearSyllable() {
-        this.state.syllable = { onset: null, vowel: null, coda: null };
-        this.state.onsetOwner = null;
-    }
-
     getBufferText() {
         return this.state.text;
     }
 
     reset(text = '') {
         this.state.text = text;
-        this.clearSyllable();
-        this.state.mode = 'ONSET';
+        this.state.pendingChar = null;
+        this.state.mode = 'BASE';
         this.state.caseMode = 0;
     }
 

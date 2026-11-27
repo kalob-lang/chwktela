@@ -1,72 +1,67 @@
 {
-    "STARTING_BOOK_NAME": "tômôs",
-    "STARTING_MAIN_NAME": "niwos",
-    "STARTING_PART_NAME": "yogô dês somo",
+    "STARTING_BOOK_NAME": "tom",
+    "STARTING_MAIN_NAME": "khozd",
+    "STARTING_PART_NAME": "parjh phwn",
     "STAGING_BRACKETS": "⟦⟧",
-    "ONSET": {
-        "DEFAULT_VOWEL": "o",
+    "BASE": {
         "LEFT": {
             "NORTH": "h",
-            "NORTH_EAST": "k",
-            "EAST": "t",
-            "SOUTH_EAST": "c",
-            "SOUTH": "f",
-            "SOUTH_WEST": "s",
-            "WEST": "n",
-            "NORTH_WEST": "l"
+            "NORTH_WEST": "y",
+            "NORTH_EAST": "r",
+            "SOUTH_WEST": "n",
+            "SOUTH_EAST": "m",
+            "SOUTH": "l"
         },
         "RIGHT": {
-            "NORTH": "y",
-            "NORTH_EAST": "g",
-            "EAST": "d",
-            "SOUTH_EAST": "z",
-            "SOUTH": "b",
-            "SOUTH_WEST": "x",
-            "WEST": "m",
-            "NORTH_WEST": "w"
+            "NORTH": "q",
+            "NORTH_WEST": "k",
+            "NORTH_EAST": "p",
+            "SOUTH_WEST": "t",
+            "SOUTH_EAST": "s",
+            "SOUTH": "c"
         }
     },
-    "RIME": {
-        "INSERT_ORDER": [
-            "VOWELS",
-            "CODA"
-        ],
-        "VOWELS": {
-            "NORTH": "i",
-            "NORTH_EAST": "û",
-            "EAST": "u",
-            "SOUTH_EAST": "ô",
-            "SOUTH": "o",
-            "SOUTH_WEST": "ê",
-            "WEST": "e",
-            "NORTH_WEST": "î"
+    "LEFT_TRIGGER": {
+        "LEFT": {
+            "NORTH": ":",
+            "NORTH_WEST": "i",
+            "NORTH_EAST": ",",
+            "SOUTH_WEST": "x",
+            "SOUTH_EAST": "o",
+            "SOUTH": "a"
         },
-        "CODA": {
-            "NORTH": "k",
-            "EAST": "t",
-            "SOUTH_EAST": "c",
-            "SOUTH_WEST": "s",
-            "WEST": "n",
-            "NORTH_WEST": "l"
+        "RIGHT": {
+            "NORTH": "-",
+            "NORTH_WEST": "v",
+            "NORTH_EAST": "_",
+            "SOUTH_WEST": "e",
+            "SOUTH_EAST": "u",
+            "SOUTH": "w"
+        }
+    },
+    "RIGHT_TRIGGER": {
+        "RIGHT": {
+            "NORTH": ".",
+            "NORTH_WEST": "g",
+            "NORTH_EAST": "b",
+            "SOUTH_WEST": "d",
+            "SOUTH_EAST": "z",
+            "SOUTH": "j"
         }
     },
     "PUNCTUATION": {
         "LEFT": {
             "NORTH": ";",
-            "NORTH_EAST": "“",
-            "EAST": "¿",
+            "NORTH_EAST": "\u201d",
             "SOUTH_EAST": ",",
-            "SOUTH": "«",
-            "SOUTH_WEST": "<",
-            "WEST": null,
-            "NORTH_WEST": null
+            "SOUTH": "\u00ab",
+            "SOUTH_WEST": "<"
         },
         "RIGHT": {
             "NORTH": ":",
-            "NORTH_EAST": "”",
-            "EAST": "?",
+            "NORTH_EAST": "\u201c",
             "SOUTH_EAST": ".",
-            "SOUTH": "»",
+            "SOUTH": "\u00bb",
             "SOUTH_WEST": ">"
         }
     }

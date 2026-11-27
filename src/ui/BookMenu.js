@@ -26,7 +26,7 @@ export class BookMenu extends SubMenu {
         // Fonts list - Hardcoded for now
         const availableFonts = [
             'Courier New', 'Arial', 'Charis SIL', 'Doulos SIL',
-            'Gentium Plus', 'Gentium Book Plus', 'Hisyoto Sans', 'Hisyakui'
+            'Gentium Plus', 'Gentium Book Plus'
         ];
 
         this.options = [
