@@ -2,7 +2,7 @@
 
 ![uywng Chwktela Logo](public/chwktela.jpeg)
 
-A gamepad-only [Kalob](https://kalob.org/) text editor designed for efficient, controller-based writing and text manipulation.
+A gamepad-only [Kalob](https://kalob-lang.github.io) text editor designed for efficient, controller-based writing and text manipulation.
 
 ## Overview
 **uywng Chwktela** reimagines text entry by mapping typing, navigation, and editing commands to a standard gamepad controller. It features a modal interface similar to console text editors but optimized for thumbs, allowing for (hopefully) high-speed input and precise control without a keyboard.
