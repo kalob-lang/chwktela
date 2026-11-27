@@ -1,6 +1,6 @@
 {
-    "name": "uywng Cwktela",
-    "short_name": "Cwktela",
+    "name": "uywng Chwktela",
+    "short_name": "Chwktela",
     "start_url": "./",
     "display": "standalone",
     "background_color": "#1a1a1a",
@@ -8,7 +8,7 @@
     "description": "A gamepad-only Kalob text editor.",
     "icons": [
         {
-            "src": "/cwktela.svg",
+            "src": "/chwktela.svg",
             "type": "image/svg+xml",
             "sizes": "512x512"
         }

@@ -5,7 +5,7 @@ export class HistoryManager {
         this.undoStack = [];
         this.redoStack = [];
         this.limit = 5000;
-        this.sessionKey = 'cwktela_history';
+        this.sessionKey = 'chwktela_history';
 
         // Coalescing Helper
         this.lastOpTime = 0;

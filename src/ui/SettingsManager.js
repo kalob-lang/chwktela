@@ -23,7 +23,7 @@ export class SettingsManager extends SubMenu {
 
     loadSettings() {
         try {
-            const saved = localStorage.getItem('cwktela_settings');
+            const saved = localStorage.getItem('chwktela_settings');
             console.log('[SettingsManager] Loading raw settings:', saved);
             if (saved) {
                 const parsed = JSON.parse(saved);
@@ -41,7 +41,7 @@ export class SettingsManager extends SubMenu {
         console.log('[SettingsManager] inside saveSettings function.');
         try {
             const data = JSON.stringify(this.config);
-            localStorage.setItem('cwktela_settings', data);
+            localStorage.setItem('chwktela_settings', data);
             console.log('[SettingsManager] Saved settings to storage:', data);
         } catch (e) {
             console.error('[SettingsManager] Failed to save settings:', e);

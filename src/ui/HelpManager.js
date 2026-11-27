@@ -7,9 +7,9 @@ export class HelpManager {
         // Define Slides
         this.slides = [
             {
-                title: "Welcome to uywng Cwktela",
+                title: "Welcome to uywng Chwktela",
                 text: `
-                    <p>uywng Cwktela is a grid-based writing environment designed for writing Kalob without a keyboard.</p>
+                    <p>uywng Chwktela is a grid-based writing environment designed for writing Kalob without a keyboard.</p>
                     <p>Use the <strong>Overview Mode</strong> to navigate the infinite grid of 'parts'.</p>
                     <p>Use the <strong>Editor Mode</strong> to write content within a part.</p>
                     <p>Press <i class="fa-solid fa-square-caret-right icon-grey"></i> <strong>Start</strong> to focus on the gutter menu.</p>

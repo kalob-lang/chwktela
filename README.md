@@ -1,11 +1,11 @@
-# uywng Cwktela
+# uywng Chwktela
 
-![uywng Cwktela Logo](public/cwktela.svg)
+![uywng Chwktela Logo](public/chwktela.svg)
 
 A gamepad-only [Kalob](https://kalob.org/) text editor designed for efficient, controller-based writing and text manipulation.
 
 ## Overview
-**uywng Cwktela** reimagines text entry by mapping typing, navigation, and editing commands to a standard gamepad controller. It features a modal interface similar to console text editors but optimized for thumbs, allowing for (hopefully) high-speed input and precise control without a keyboard.
+**uywng Chwktela** reimagines text entry by mapping typing, navigation, and editing commands to a standard gamepad controller. It features a modal interface similar to console text editors but optimized for thumbs, allowing for (hopefully) high-speed input and precise control without a keyboard.
 
 ## Features
 - **Gamepad Typing**: Direct character entry via joystick directions.
@@ -22,8 +22,8 @@ A gamepad-only [Kalob](https://kalob.org/) text editor designed for efficient, c
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/cwktela.git
-   cd cwktela
+   git clone https://github.com/your-repo/chwktela.git
+   cd chwktela
    ```
 
 2. Install dependencies:
