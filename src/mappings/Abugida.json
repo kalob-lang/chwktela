@@ -32,7 +32,7 @@
             "SOUTH": "ı̀"
         },
         "RIGHT": {
-            "NORTH": "-",
+            "NORTH": "–",
             "NORTH_WEST": "ı̌",
             "NORTH_EAST": "_",
             "SOUTH_WEST": "ı́",
@@ -50,20 +50,60 @@
             "SOUTH": "ɜ"
         }
     },
-    "PUNCTUATION": {
-        "LEFT": {
-            "NORTH": "ʭ",
-            "NORTH_EAST": "｣",
-            "SOUTH_EAST": "､",
-            "SOUTH": "‹",
-            "SOUTH_WEST": "<"
+    "PUNCTUATION": [
+        {
+            "LEFT": {
+                "NORTH": "⸵",
+                "NORTH_WEST": "⟮",
+                "NORTH_EAST": "｣",
+                "SOUTH": "⟪",
+                "SOUTH_WEST": "⟨",
+                "SOUTH_EAST": "､"
+            },
+            "RIGHT": {
+                "NORTH": "!",
+                "NORTH_WEST": "⟯",
+                "NORTH_EAST": "｢",
+                "SOUTH": "⟫",
+                "SOUTH_WEST": "⟩",
+                "SOUTH_EAST": "?"
+            }
         },
-        "RIGHT": {
-            "NORTH": "–",
-            "NORTH_EAST": "｢",
-            "SOUTH_EAST": ":",
-            "SOUTH": "›",
-            "SOUTH_WEST": ">"
+        {
+            "LEFT": {
+                "NORTH": "1",
+                "NORTH_WEST": "2",
+                "NORTH_EAST": "3",
+                "SOUTH": "=",
+                "SOUTH_WEST": "4",
+                "SOUTH_EAST": "5"
+            },
+            "RIGHT": {
+                "NORTH": "6",
+                "NORTH_WEST": "7",
+                "NORTH_EAST": "8",
+                "SOUTH": "+",
+                "SOUTH_WEST": "9",
+                "SOUTH_EAST": "0"
+            }
+        },
+        {
+            "LEFT": {
+                "NORTH": "@",
+                "NORTH_WEST": "#",
+                "NORTH_EAST": "$",
+                "SOUTH": "%",
+                "SOUTH_WEST": "^",
+                "SOUTH_EAST": "&"
+            },
+            "RIGHT": {
+                "NORTH": "*",
+                "NORTH_WEST": "/",
+                "NORTH_EAST": "\\",
+                "SOUTH": "~",
+                "SOUTH_WEST": "`",
+                "SOUTH_EAST": "|"
+            }
         }
-    }
+    ]
 }

@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { EditorMode } from '../src/modes/EditorMode';
+import { FocusManager } from '../src/ui/FocusManager';
 
 describe('EditorMode', () => {
     let editorMode;
@@ -198,6 +199,75 @@ describe('EditorMode', () => {
             editorMode.handleInput({ buttons: { dpad: { left: true } } }, {});
 
             expect(mocks.bookManager.setPartCursor).toHaveBeenLastCalledWith(1); // Back to start of tag
+        });
+    });
+
+    describe('Adjacent Part Switching (Select + D-Pad)', () => {
+        it('switches to an existing adjacent part and syncs state', () => {
+            const current = { x: 0, y: 0, name: 'Main', content: 'abc', cursor: 3 };
+            const neighbor = { x: 1, y: 0, name: 'Next', content: 'xyz', cursor: 1 };
+
+            mocks.bookManager.getCurrentPart
+                .mockReturnValueOnce(current)
+                .mockReturnValue(neighbor);
+            mocks.bookManager.getPart = vi.fn().mockReturnValue(neighbor);
+            mocks.bookManager.createPart = vi.fn();
+            mocks.bookManager.saveToStorage = vi.fn();
+            mocks.typingEngine.resetInputState = vi.fn();
+            mocks.overviewMode = { cursor: { x: 0, y: 0 } };
+            editorMode.overviewMode = mocks.overviewMode;
+
+            const switched = editorMode.switchAdjacentPart(1, 0);
+
+            expect(switched).toBe(true);
+            expect(mocks.bookManager.createPart).not.toHaveBeenCalled();
+            expect(mocks.bookManager.selectPart).toHaveBeenCalledWith(1, 0);
+            expect(mocks.overviewMode.cursor).toEqual({ x: 1, y: 0 });
+            expect(mocks.gridOverview.setCursor).toHaveBeenCalledWith(1, 0);
+            expect(mocks.typingEngine.reset).toHaveBeenCalledWith('xyz');
+            expect(mocks.renderer.render).toHaveBeenCalledWith(neighbor, null);
+        });
+
+        it('creates and switches to an empty adjacent grid cell', () => {
+            const current = { x: 0, y: 0, name: 'Main', content: 'abc', cursor: 3 };
+            const created = { x: 0, y: 1, name: 'part one', content: '', cursor: 0 };
+
+            mocks.bookManager.getCurrentPart
+                .mockReturnValueOnce(current)
+                .mockReturnValue(created);
+            mocks.bookManager.getPart = vi.fn().mockReturnValue(undefined);
+            mocks.bookManager.createPart = vi.fn();
+            mocks.bookManager.saveToStorage = vi.fn();
+            mocks.typingEngine.resetInputState = vi.fn();
+
+            const switched = editorMode.switchAdjacentPart(0, 1);
+
+            expect(switched).toBe(true);
+            expect(mocks.bookManager.createPart).toHaveBeenCalledWith(0, 1);
+            expect(mocks.historyManager.push).toHaveBeenCalledWith(expect.objectContaining({
+                type: 'ADD_PART',
+                partKey: '0,1',
+                data: { x: 0, y: 1 }
+            }));
+            expect(mocks.bookManager.selectPart).toHaveBeenCalledWith(0, 1);
+            expect(mocks.renderer.render).toHaveBeenCalledWith(created, null);
+        });
+
+        it('shows fa-arrows-up-down-left-right when Select is held in EDITOR or in OVERVIEW mode', () => {
+            document.body.innerHTML = '<div id="mode-indicator"></div>';
+            const fm = new FocusManager();
+            const el = document.getElementById('mode-indicator');
+
+            fm.mode = 'EDITOR';
+            fm.updateModeIcon('BASE', false, false, true);
+            expect(el.innerHTML).toContain('fa-arrows-up-down-left-right');
+
+            fm.updateModeIcon('BASE', false, false, false);
+            expect(el.innerHTML).toContain('fa-border-none');
+
+            fm.mode = 'OVERVIEW';
+            fm.updateModeIcon();
+            expect(el.innerHTML).toContain('fa-arrows-up-down-left-right');
         });
     });
 });

@@ -42,14 +42,14 @@ export class Visualizer {
         return segments;
     }
 
-    update(input, mode, mappings) {
+    update(input, mode, mappings, punctuationLayerIndex = 0) {
         if (!input) return;
 
-        this.updateJoystick(this.leftStickPoint, this.leftSegments, input.sticks.left, mode, mappings, 'left');
-        this.updateJoystick(this.rightStickPoint, this.rightSegments, input.sticks.right, mode, mappings, 'right');
+        this.updateJoystick(this.leftStickPoint, this.leftSegments, input.sticks.left, mode, mappings, 'left', punctuationLayerIndex);
+        this.updateJoystick(this.rightStickPoint, this.rightSegments, input.sticks.right, mode, mappings, 'right', punctuationLayerIndex);
     }
 
-    updateJoystick(stickPoint, segments, stickData, mode, mappings, side) {
+    updateJoystick(stickPoint, segments, stickData, mode, mappings, side, punctuationLayerIndex = 0) {
         // Move the stick point (visual feedback of physical stick)
         const maxDist = 30; // px
         const x = stickData.x * maxDist;
@@ -83,7 +83,13 @@ export class Visualizer {
                 currentMap = mappings.BASE?.LEFT;
             }
         } else if (mode === 'PUNCTUATION') {
-            currentMap = mappings.PUNCTUATION?.[side.toUpperCase()];
+            const punc = mappings.PUNCTUATION;
+            if (Array.isArray(punc)) {
+                const idx = punc.length > 0 ? ((punctuationLayerIndex % punc.length) + punc.length) % punc.length : 0;
+                currentMap = punc[idx]?.[side.toUpperCase()];
+            } else {
+                currentMap = punc?.[side.toUpperCase()];
+            }
         }
 
         if (currentMap) {

@@ -17,11 +17,12 @@ describe('InputRouter', () => {
                 }),
                 toggleBottomBar: vi.fn(),
                 toggleOverview: vi.fn(),
+                updateModeIcon: vi.fn(),
                 citationUpdateTarget: null
             },
             gutterMode: { handleInput: vi.fn() },
             overviewMode: { handleInput: vi.fn() },
-            editorMode: { handleInput: vi.fn() },
+            editorMode: { handleInput: vi.fn(), switchAdjacentPart: vi.fn(), lastDpad: {} },
             visualSelectMode: { handleInput: vi.fn() },
             renamingMode: { handleInput: vi.fn() }, // NEW
             settingsManager: {
@@ -194,14 +195,14 @@ describe('InputRouter', () => {
         it('should cycle EDITOR -> OVERVIEW -> GUTTER -> OVERVIEW', () => {
             deps.focusManager.mode = 'EDITOR';
 
-            // Press Select -> OVERVIEW
+            // Press Select (stays in EDITOR while held, updates mode icon)
             router.route(createInput({ select: true }), {});
-            expect(deps.focusManager.mode).toBe('OVERVIEW');
+            expect(deps.focusManager.mode).toBe('EDITOR');
+            expect(deps.focusManager.updateModeIcon).toHaveBeenCalledWith('BASE', false, false, true);
 
-            // Cleanup Latch
-            deps.gamepadManager.lastSelect = true;
+            // Release Select -> OVERVIEW (momentary tap with no D-Pad nav)
             router.route(createInput({ select: false }), {});
-            deps.gamepadManager.lastSelect = false;
+            expect(deps.focusManager.mode).toBe('OVERVIEW');
 
             // Press Start -> GUTTER
             router.route(createInput({ start: true }), {});
@@ -216,6 +217,31 @@ describe('InputRouter', () => {
             // Press Start -> OVERVIEW (Back from Gutter)
             router.route(createInput({ start: true }), {});
             expect(deps.focusManager.mode).toBe('OVERVIEW');
+        });
+
+        it('switches adjacent parts when holding Select + D-Pad in EDITOR without opening OVERVIEW', () => {
+            deps.focusManager.mode = 'EDITOR';
+
+            // Hold Select
+            router.route(createInput({ select: true, dpad: {} }), {});
+            expect(deps.editorMode.handleInput).not.toHaveBeenCalled();
+            expect(deps.focusManager.updateModeIcon).toHaveBeenLastCalledWith('BASE', false, false, true);
+
+            // Press D-Pad Right while holding Select
+            router.route(createInput({ select: true, dpad: { right: true } }), {});
+            expect(deps.editorMode.switchAdjacentPart).toHaveBeenCalledWith(1, 0);
+            expect(deps.editorMode.handleInput).not.toHaveBeenCalled();
+
+            // Release D-Pad, press Up while still holding Select
+            router.route(createInput({ select: true, dpad: {} }), {});
+            router.route(createInput({ select: true, dpad: { up: true } }), {});
+            expect(deps.editorMode.switchAdjacentPart).toHaveBeenCalledWith(0, 1);
+
+            // Release Select -> should stay in EDITOR (NOT switch to OVERVIEW) and reset icon
+            router.route(createInput({ select: false, dpad: {} }), {});
+            expect(deps.focusManager.mode).toBe('EDITOR');
+            expect(deps.focusManager.toggleOverview).not.toHaveBeenCalled();
+            expect(deps.focusManager.updateModeIcon).toHaveBeenLastCalledWith('BASE', false, false, false);
         });
     });
 

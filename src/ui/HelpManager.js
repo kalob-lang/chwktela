@@ -49,6 +49,11 @@ export class HelpManager {
                     <br/>
                     <p>The right joystick selects: ., g, b, d, z, j.</p>
                     <p>The left joystick stays on base consonants (H, Y, R, N, M, L).</p>
+
+                    <h3>Both Triggers Mode (Punctuation &amp; Symbols)</h3>
+                    <p>Hold both <strong>LT + RT</strong> triggers to access punctuation, numbers, and symbols.</p>
+                    <p>While holding both triggers, click <i class="fa-solid fa-y icon-yellow"></i> <strong>Y</strong> to rotate through the layers (wrapping around to the first layer).</p>
+                    <p>The indicator bar shows circles for all layers with a dot on the active layer, and the joystick wheels update to match.</p>
                     
                     <h3>Shortcuts</h3>
                     <p><i class="fa-solid fa-a icon-green"></i>: Space</p>
@@ -58,6 +63,8 @@ export class HelpManager {
                     <p><strong>L3/R3</strong>: Shift / Caps Lock (Toggle)</p>
                     <p><strong>L2</strong>: Backspace</p>
                     <p><strong>R2</strong>: Tab</p>
+                    <p><i class="fa-solid fa-square-caret-left icon-grey"></i> <strong>Select (Tap)</strong>: Overview Mode</p>
+                    <p><i class="fa-solid fa-square-caret-left icon-grey"></i> <strong>Select (Hold) + D-Pad</strong>: Switch Adjacent Part</p>
 
                     <h3>Modifier Shortcuts</h3>
                     <p><i class="fa-solid fa-y icon-yellow"></i> + <i class="fa-solid fa-arrows-left-right icon-purple"></i> Left: Word Left</p>

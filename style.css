@@ -194,6 +194,7 @@ body {
 
 #case-indicator {
   color: var(--secondary);
+  gap: 6px;
 }
 
 .editor-container {

@@ -43,9 +43,15 @@ export class FocusManager {
         }
     }
 
-    updateModeIcon(typingMode, isModifierHeld, onsetSelectionInProgress = false) {
+    updateModeIcon(typingMode, isModifierHeld, onsetSelectionInProgress = false, isSelectHeld = false) {
         const modeIcon = document.getElementById('mode-indicator');
         if (!modeIcon) return;
+
+        // If in Overview Mode, show directional overview icon
+        if (this.mode === 'OVERVIEW') {
+            modeIcon.innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right"></i>';
+            return;
+        }
 
         // If in Visual Select Mode, use specific icon
         if (this.mode === 'VISUAL_SELECT') {
@@ -56,6 +62,12 @@ export class FocusManager {
         if (this.mode !== 'EDITOR') {
             // Default for other modes
             modeIcon.innerHTML = '<i class="fa-solid fa-border-none"></i>';
+            return;
+        }
+
+        // Select held in Editor Mode -> quick part navigation icon
+        if (isSelectHeld) {
+            modeIcon.innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right"></i>';
             return;
         }
 
@@ -85,9 +97,23 @@ export class FocusManager {
         modeIcon.innerHTML = iconHtml;
     }
 
-    updateCaseIcon(caseMode, caseModeType = 'upper') {
+    updateCaseIcon(caseMode, caseModeType = 'upper', punctuationState = null) {
         const caseIcon = document.getElementById('case-indicator');
         if (!caseIcon) return;
+
+        if (punctuationState && punctuationState.layerCount > 0) {
+            const count = punctuationState.layerCount;
+            const activeIdx = ((punctuationState.layerIndex || 0) % count + count) % count;
+            let dotsHtml = '';
+            for (let i = 0; i < count; i++) {
+                dotsHtml += i === activeIdx
+                    ? '<i class="fa-solid fa-circle-dot"></i>'
+                    : '<i class="fa-regular fa-circle"></i>';
+            }
+            caseIcon.innerHTML = dotsHtml;
+            caseIcon.title = `Punctuation Layer ${activeIdx + 1} of ${count}`;
+            return;
+        }
 
         const modeType = caseModeType === 'break' ? 'break' : 'upper';
         let iconHtml = '<i class="fa-regular fa-circle"></i>';

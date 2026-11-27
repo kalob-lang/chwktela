@@ -54,6 +54,8 @@ A gamepad-only [Kalob](https://kalob-lang.github.io) text editor designed for ef
 - **L2**: Backspace
 - **R2**: Tab
 - **L3/R3**: Shift / Caps Lock (Toggle)
+- **Select (Tap)**: Toggle Overview Mode
+- **Select (Hold) + D-Pad**: Switch to Adjacent Part (Left / Right / Up / Down)
 - **Modifier + D-Pad Left/Right**: Word Navigation
 - **Modifier + D-Pad Up**: Home / Top of Part
 - **Modifier + D-Pad Down**: End / Bottom of Part
@@ -84,8 +86,10 @@ A gamepad-only [Kalob](https://kalob-lang.github.io) text editor designed for ef
 
 *Left stick stays on base consonants when Right Trigger is held.*
 
-#### Both Triggers Held — Punctuation
-Uses a separate punctuation mapping defined in the active writing system.
+#### Both Triggers Held — Punctuation / Numbers / Symbols
+Hold both **LT + RT** to access the `PUNCTUATION` layers defined by the active writing system (punctuation, numbers/math, and symbols).
+- **Rotate Layers (`LT + RT + Y`)**: While holding both triggers, click **Y (North)** to cycle forward through the punctuation layers (wrapping from the last layer back to the first).
+- The joystick wheels update to show the active layer, and the focus bar indicator displays a row of circles (`fa-circle`), highlighting the active layer (`fa-circle-dot`).
 
 ### Overview Mode
 - **D-Pad**: Grid Navigation
@@ -133,10 +137,12 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
     "RIGHT_TRIGGER": {
         "RIGHT": { ... }
     },
-    "PUNCTUATION": {
-        "LEFT": { ... },
-        "RIGHT": { ... }
-    }
+    "PUNCTUATION": [
+        {
+            "LEFT": { ... },
+            "RIGHT": { ... }
+        }
+    ]
 }
 ```
 
@@ -150,15 +156,15 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
 - **BASE**: Character maps for left and right sticks in default mode.
 - **LEFT_TRIGGER**: Character maps when left trigger is held.
 - **RIGHT_TRIGGER**: Character map for the right stick when right trigger is held.
-- **PUNCTUATION**: Character maps when both triggers are held.
+- **PUNCTUATION**: An array of `{ LEFT, RIGHT }` character map layers (or a single object) used when both triggers are held. While holding both triggers, clicking **Y** rotates through the layers (wrapping back to the first layer).
 
 > **Combining-Mark Mappings**: Whenever a mapping entry contains two glyphs where one is a normal glyph and the other is a combining mark (such as `◌̲` or `ı̂`), triggering it enters the full 2-codepoint string when there is no preceding letter, and enters only the combining mark when a preceding letter (including a letter that already has combining marks) immediately precedes the cursor — unless `"CASE_MODE": "break"` is active (`caseMode` `1` or `2`).
 
 ## Roadmap
 
 - [x] Home/End/Top/Bottom navigation keys
-- [ ] In Editor Mode, part navigation using Select + D-Pad
-- [ ] Add a joystick layer for symbols/numbers
+- [x] In Editor Mode, part navigation using Select + D-Pad
+- [x] Add a joystick layer for symbols/numbers
 - [ ] Allow parts to be external links to websites that load in an iframe
 - [ ] New buffer style (called Navigator, now there are 3 buffer styles: Editor, Navigator, and Overview) used for FINDING and CHECKING modes
     - The buffer fills the space that Editor and Overview utilize

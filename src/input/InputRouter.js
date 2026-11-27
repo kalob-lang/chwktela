@@ -3,6 +3,9 @@ export class InputRouter {
         this.deps = deps;
         this.confirmCallback = null;
         this.lastRenamingState = null;
+        this.selectActive = false;
+        this.selectUsedForNav = false;
+        this.lastSelectDpad = { up: false, down: false, left: false, right: false };
     }
 
     route(frameInput, gamepad) {
@@ -51,18 +54,66 @@ export class InputRouter {
         }
 
 
-        // Select -> Toggle Overview
-        if (focusManager.mode !== 'DIALOG_CONFIRM' && focusManager.mode !== 'RENAMING' && selectPressed && !gamepadManager.lastSelect) {
-            if (focusManager.mode === 'OVERVIEW') {
-                // Reset Targets
-                focusManager.citationUpdateTarget = null;
-                gridOverview.setLinkTarget(null);
+        // Select -> Hold + D-Pad for quick part nav (Editor), or Release to Toggle Overview
+        const dpad = frameInput.buttons?.dpad || {};
+
+        if (focusManager.mode === 'DIALOG_CONFIRM' || focusManager.mode === 'RENAMING') {
+            this.selectActive = false;
+            this.selectUsedForNav = false;
+        } else {
+            if (selectPressed && !gamepadManager.lastSelect) {
+                this.selectActive = true;
+                this.selectUsedForNav = false;
             }
-            focusManager.toggleOverview();
-            if (focusManager.mode === 'OVERVIEW') {
-                // gridOverview.syncInputState(frameInput);
+
+            if (this.selectActive && selectPressed) {
+                if (focusManager.mode === 'EDITOR') {
+                    focusManager.updateModeIcon?.('BASE', false, false, true);
+
+                    const justPressed = (dir) => Boolean(dpad[dir] && !this.lastSelectDpad[dir]);
+                    let dx = 0;
+                    let dy = 0;
+                    if (justPressed('left')) dx = -1;
+                    else if (justPressed('right')) dx = 1;
+                    else if (justPressed('up')) dy = 1;
+                    else if (justPressed('down')) dy = -1;
+
+                    if (dx !== 0 || dy !== 0) {
+                        this.selectUsedForNav = true;
+                        editorMode?.switchAdjacentPart?.(dx, dy);
+                    }
+
+                    if (editorMode) {
+                        editorMode.lastDpad = { ...dpad };
+                    }
+                }
+            } else if (this.selectActive && !selectPressed && gamepadManager.lastSelect) {
+                if (!this.selectUsedForNav) {
+                    if (focusManager.mode === 'OVERVIEW') {
+                        // Reset Targets
+                        focusManager.citationUpdateTarget = null;
+                        gridOverview?.setLinkTarget?.(null);
+                    }
+                    focusManager.toggleOverview();
+                }
+
+                if (focusManager.mode === 'OVERVIEW') {
+                    focusManager.updateModeIcon?.();
+                } else if (focusManager.mode === 'EDITOR') {
+                    focusManager.updateModeIcon?.(
+                        this.deps.typingEngine?.state?.mode || 'BASE',
+                        Boolean(frameInput.buttons?.north),
+                        false,
+                        false
+                    );
+                }
+
+                this.selectActive = false;
+                this.selectUsedForNav = false;
             }
         }
+
+        this.lastSelectDpad = { ...dpad };
 
         // --- 3. Mode Switching ---
         switch (focusManager.mode) {
@@ -87,7 +138,9 @@ export class InputRouter {
                 break;
 
             case 'EDITOR':
-                editorMode.handleInput(frameInput, gamepad);
+                if (!(this.selectActive && selectPressed)) {
+                    editorMode.handleInput(frameInput, gamepad);
+                }
                 break;
 
             case 'VISUAL_SELECT':

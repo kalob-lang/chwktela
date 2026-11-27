@@ -299,6 +299,9 @@ function updateStatusText(mode) {
   if (mode === 'VISUAL_SELECT') {
     if (modeIcon) modeIcon.innerHTML = '<i class="fa-solid fa-eye"></i>';
     if (caseIcon) caseIcon.style.display = 'none';
+  } else if (mode === 'OVERVIEW') {
+    if (modeIcon) modeIcon.innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right"></i>';
+    if (caseIcon) caseIcon.style.display = 'flex';
   } else if (mode === 'EDITOR' || mode === 'RENAMING') {
     if (modeIcon) {
       let isModifier = false;
@@ -955,7 +958,14 @@ function loop() {
   inputRouter.route(frameInput, gamepad);
 
   // Update Case Indicator
-  focusManager.updateCaseIcon(typingEngine.state.caseMode, typingEngine.getCaseModeType());
+  const puncLayers = typingEngine.getPunctuationLayers();
+  focusManager.updateCaseIcon(
+    typingEngine.state.caseMode,
+    typingEngine.getCaseModeType(),
+    typingEngine.state.mode === 'PUNCTUATION'
+      ? { layerIndex: typingEngine.state.punctuationLayer, layerCount: puncLayers.length }
+      : null
+  );
 
   // Update History (CRITICAL for debounce)
   gamepadManager.updateLastButtons(frameInput);

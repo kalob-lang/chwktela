@@ -55,6 +55,7 @@ export class TypingEngine {
             // Tracking
             lastInput: null,
             pendingChar: null,
+            punctuationLayer: 0,
 
             // Debounce / Dwell State
             leftStick: { sector: null, enterTime: 0, locked: false },
@@ -83,10 +84,33 @@ export class TypingEngine {
         if (availableMappings[name]) {
             this.currentMappingName = name;
             this.mappings = availableMappings[name];
+            this.state.punctuationLayer = 0;
             logger.log('SYSTEM', `Mapping switched to ${name}`);
         } else {
             console.error(`Mapping ${name} not found`);
         }
+    }
+
+    getPunctuationLayers(mappings = this.mappings) {
+        const punc = mappings?.PUNCTUATION;
+        if (!punc) return [];
+        return Array.isArray(punc) ? punc : [punc];
+    }
+
+    getActivePunctuationLayer(mappings = this.mappings) {
+        const layers = this.getPunctuationLayers(mappings);
+        if (layers.length === 0) return null;
+        const idx = ((this.state.punctuationLayer || 0) % layers.length + layers.length) % layers.length;
+        return layers[idx];
+    }
+
+    rotatePunctuationLayer() {
+        const layers = this.getPunctuationLayers();
+        if (layers.length === 0) return 0;
+        this.state.punctuationLayer = ((this.state.punctuationLayer || 0) + 1) % layers.length;
+        this.state.pendingChar = null;
+        logger.log('MODE', `Punctuation layer switched to ${this.state.punctuationLayer}`);
+        return this.state.punctuationLayer;
     }
 
     processFrame(gamepad) {
@@ -203,8 +227,9 @@ export class TypingEngine {
             processStick('right', this.mappings.RIGHT_TRIGGER?.RIGHT);
         }
         else if (this.state.mode === 'PUNCTUATION') {
-            processStick('left', this.mappings.PUNCTUATION?.LEFT);
-            processStick('right', this.mappings.PUNCTUATION?.RIGHT);
+            const activePunctuation = this.getActivePunctuationLayer();
+            processStick('left', activePunctuation?.LEFT);
+            processStick('right', activePunctuation?.RIGHT);
         }
 
         // IMPORTANT: Update state for next frame
@@ -253,6 +278,11 @@ export class TypingEngine {
             } else {
                 this.typeCharacter('\t');
             }
+        }
+
+        // Rotate Punctuation Layer: Both Triggers Held + Y (North)
+        if (current.mode?.bothTriggers && pressed('north')) {
+            this.rotatePunctuationLayer();
         }
 
         // Case Switching (L3/R3)

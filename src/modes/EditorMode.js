@@ -32,12 +32,56 @@ export class EditorMode extends TextEntryMode {
             this.typingEngine.state.cursor = part.cursor ?? part.content.length;
             this.lastEngineTextLength = part.content.length;
             this.lastDpad = { up: false, down: false, left: false, right: false };
+            this.lastRenderedState = null;
             this.selectionAnchor = null;
 
             // CRITICAL: Reset Input State to prevent entry button from typing
-            const gp = this.gamepadManager.getActiveGamepad();
+            const gp = this.gamepadManager?.getActiveGamepad?.();
             if (gp) this.typingEngine.resetInputState(gp);
         }
+    }
+
+    switchAdjacentPart(dx, dy) {
+        const part = this.bookManager.getCurrentPart();
+        if (!part) return false;
+
+        const targetX = part.x + dx;
+        const targetY = part.y + dy;
+
+        if (!this.bookManager.getPart(targetX, targetY)) {
+            this.bookManager.createPart(targetX, targetY);
+            if (this.historyManager) {
+                this.historyManager.push({
+                    type: 'ADD_PART',
+                    partKey: `${targetX},${targetY}`,
+                    data: { x: targetX, y: targetY }
+                });
+            }
+        }
+
+        this.bookManager.selectPart(targetX, targetY);
+        this.bookManager.saveToStorage?.();
+
+        if (this.overviewMode?.cursor) {
+            this.overviewMode.cursor.x = targetX;
+            this.overviewMode.cursor.y = targetY;
+        }
+        if (this.gridOverview?.setCursor) {
+            this.gridOverview.setCursor(targetX, targetY);
+        }
+
+        this.resetState();
+
+        const newPart = this.bookManager.getCurrentPart();
+        if (newPart && this.renderer) {
+            this.renderer.render(newPart, this.selectionAnchor);
+        }
+
+        if (newPart && this.showNotification) {
+            this.showNotification(`Part: ${newPart.name} (${targetX}, ${targetY})`);
+        }
+
+        return true;
     }
 
     handleInput(frameInput, gamepad) {
@@ -130,6 +174,19 @@ export class EditorMode extends TextEntryMode {
             // Update Status Icon
             const isJoystickActive = frameInput.sticks?.left?.active || false;
             this.focusManager.updateModeIcon(this.typingEngine.state.mode, this.isModifierHeld, isJoystickActive);
+        }
+
+        // Rotate Punctuation Layer: Both Triggers Held + Click Y (North)
+        if (frameInput.mode?.bothTriggers && frameInput.buttons.north && !this.gamepadManager.lastButtons?.north) {
+            this.typingEngine.rotatePunctuationLayer();
+            this.visualizer.update(
+                frameInput,
+                'PUNCTUATION',
+                this.typingEngine.mappings,
+                this.typingEngine.state.punctuationLayer
+            );
+            this.gamepadManager.lastButtons = { ...frameInput.buttons };
+            return;
         }
 
         // Undo: Y (North) + Left Trigger
@@ -401,6 +458,14 @@ export class EditorMode extends TextEntryMode {
 
         // 3. Command Layer Guard
         if (this.isModifierHeld) {
+            if (frameInput.mode?.bothTriggers) {
+                this.visualizer.update(
+                    frameInput,
+                    'PUNCTUATION',
+                    this.typingEngine.mappings,
+                    this.typingEngine.state.punctuationLayer
+                );
+            }
             this.gamepadManager.lastButtons = { ...frameInput.buttons };
             return;
         }
@@ -476,7 +541,7 @@ export class EditorMode extends TextEntryMode {
                 }
 
                 this.renderer.render(part, this.selectionAnchor);
-                this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings);
+                this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings, this.typingEngine.state.punctuationLayer);
                 // break equivalent (return from fn)
                 return;
             }
@@ -524,7 +589,7 @@ export class EditorMode extends TextEntryMode {
 
 
 
-            this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings);
+            this.visualizer.update(frameInput, state.mode, this.typingEngine.mappings, this.typingEngine.state.punctuationLayer);
 
             // Sync Icon
             const isJoystickActive = frameInput.sticks?.left?.active || false;

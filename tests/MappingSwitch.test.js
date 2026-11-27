@@ -29,6 +29,7 @@ test('TypingEngine switches mappings correctly', () => {
     expect(engine.mappings.BASE.LEFT.NORTH).toBe('◌̲');
 
     // But different punctuation
-    expect(engine.mappings.PUNCTUATION.LEFT.NORTH).toBe('ʭ');
-    expect(engine.mappings.PUNCTUATION.LEFT.NORTH).not.toBe(';'); // Should NOT be Latin
+    expect(Array.isArray(engine.mappings.PUNCTUATION)).toBe(true);
+    expect(engine.mappings.PUNCTUATION[0].LEFT.NORTH).toBe('⸵');
+    expect(engine.mappings.PUNCTUATION[0].LEFT.NORTH).not.toBe(';'); // Should NOT be Latin
 });
