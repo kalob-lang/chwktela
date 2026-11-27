@@ -165,7 +165,6 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
 - [x] Home/End/Top/Bottom navigation keys
 - [x] In Editor Mode, part navigation using Select + D-Pad
 - [x] Add a joystick layer for symbols/numbers
-- [ ] Allow parts to be external links to websites that load in an iframe
 - [ ] New buffer style (called Navigator, now there are 3 buffer styles: Editor, Navigator, and Overview) used for FINDING and CHECKING modes
     - The buffer fills the space that Editor and Overview utilize
     - The buffer containers a header and a main content area
@@ -213,6 +212,7 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
         - LB (Left Shoulder) button acts as backspace to delete the last character of the erroneous word (and moves the cursor left)
         - RB (Right Shoulder) button replaces the erroneous word with the selected correction (and moves the cursor to the next error)
         - NOTE: A and LB are normal EDITOR mode behaviors in CHECKING mode because they are used for typing the corrections
+- [ ] Allow parts to be external links to websites that load in an iframe
 
 ## License
 [ACSL](LICENSE)
