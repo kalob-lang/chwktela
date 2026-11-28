@@ -27,9 +27,9 @@
             "NORTH": ":",
             "NORTH_WEST": "i",
             "NORTH_EAST": ",",
-            "SOUTH_WEST": "x",
+            "SOUTH_WEST": "a",
             "SOUTH_EAST": "o",
-            "SOUTH": "a"
+            "SOUTH": "x"
         },
         "RIGHT": {
             "NORTH": "-",

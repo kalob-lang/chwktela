@@ -27,9 +27,9 @@
             "NORTH": ":",
             "NORTH_WEST": "ı̂",
             "NORTH_EAST": ",",
-            "SOUTH_WEST": "ı̽",
+            "SOUTH_WEST": "ı̀",
             "SOUTH_EAST": "ı̇",
-            "SOUTH": "ı̀"
+            "SOUTH": "ı̽"
         },
         "RIGHT": {
             "NORTH": "–",
