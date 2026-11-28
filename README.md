@@ -13,7 +13,8 @@ A gamepad-only [Kalob](https://kalob-lang.github.io) text editor designed for ef
   - **Editor**: Standard text composition.
   - **Overview**: Grid-based navigation of document parts.
   - **Visual Select**: Precise text selection and manipulation.
-  - **Gutter**: Bottom bar for file management, settings, and gamepad configuration.
+  - **Spellcheck Menu & Checking**: Segment-level Kalob spellchecking powered by `kalob-spell`, with custom `ignore_words` / `add_words` lists and interactive error navigation.
+  - **Gutter**: Bottom bar for file management, settings, spellchecking, and gamepad configuration.
 - **Persistence**: Auto-saves content and settings to LocalStorage.
 - **Undo/Redo**: Robust history system saved to SessionStorage.
 - **Citations**: Atomic citation tags `{{cite:x,y}}` with jump navigation support.
@@ -100,6 +101,24 @@ Hold both **LT + RT** to access the `PUNCTUATION` layers defined by the active w
 - **D-Pad**: Expand/Shrink Selection
 - **West (X)**: Cut
 - **South (A)**: Copy
+
+### Spellcheck (`SPELLCHECK_MENU` & `CHECKING` Modes)
+- **Enable**: Toggle **Spellcheck** in Settings. When enabled, the Check Mode icon (`fa-circle-check` / `fa-circle-exclamation`) appears next to the Case Mode icon in the bottom bar (with a lower-right error count badge in Editor Mode).
+- **Highlights & Badges**: Unrecognized Kalob lexemes and invalid `u`-glued compound segments are shown in red boxes in Editor and Checking modes; Overview Mode outlines parts with errors in red and displays an error count badge in the lower-right corner.
+- **Spelling Menu (`SPELLCHECK_MENU`)**: Open by clicking the Check Mode icon or selecting it in Gutter Mode (right from Book, or left from Export Logs / Gamepad):
+  - **Ignore Words** / **Add Words**: Opens a newline-separated editor backed by `localStorage` (`ignore_words` / `add_words`). Press **South (A)** to save (instead of inserting a space) or **Select** to cancel.
+  - **Check Book Spelling** / **Check Part Spelling**: Enters Checking Mode at the first error in the book or current part, displaying a top-left **Part / Book** toggle gutter with `current / total` error count and a corrections dropdown below the active segment.
+- **Checking Mode (`CHECKING`)**:
+  - **D-Pad Left / Right**: Navigate between errors in the active scope (part or book)
+  - **D-Pad Up / Down**: Navigate corrections in the dropdown (or `No Corrections` if none match)
+  - **RB**: Replace erroneous segment with selected correction and move to next error
+  - **North (Y)**: Add erroneous word to `ignore_words` and move to next error
+  - **West (X)**: Delete erroneous segment and exit to Editor Mode
+  - **South (A)**: Replace erroneous segment with a space and exit to Editor Mode
+  - **East (B)**: Replace erroneous segment with a newline and exit to Editor Mode
+  - **LB**: Backspace the last character of the erroneous word and exit to Editor Mode
+  - **Start**: Return to the Spelling Menu (`SPELLCHECK_MENU`)
+  - **Select**: Exit Checking Mode and return to Overview Mode
 
 ## Custom Mappings
 

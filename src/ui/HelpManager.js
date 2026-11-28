@@ -112,6 +112,33 @@ export class HelpManager {
                     <p><i class="fa-solid fa-x icon-blue"></i>: Cut / Delete</p>
                     <p><i class="fa-solid fa-b icon-red"></i>: Cancel</p>
                 `
+            },
+            {
+                title: "Spellchecking",
+                text: `
+                    <h3>Enabling &amp; Indicators</h3>
+                    <p>Enable <strong>Spellcheck</strong> in the Settings menu to validate Kalob words and <code>u</code>-glued compounds across the book via <code>kalob-spell</code>.</p>
+                    <p>When enabled, the <strong>Check Mode</strong> icon appears next to the Case Mode icon (<i class="fa-solid fa-circle-check"></i> when clean, <i class="fa-solid fa-circle-exclamation"></i> when errors exist) with an error count badge in Editor Mode.</p>
+                    <p>Erroneous segments are highlighted with a red box in Editor and Checking modes, and Overview Mode highlights parts with errors and shows an error count badge in the lower-right corner.</p>
+
+                    <h3>Spelling Menu</h3>
+                    <p>Click the Check Mode icon or navigate to it in Gutter Mode to open the <strong>Spelling Menu</strong>:</p>
+                    <p><strong>Ignore Words</strong> / <strong>Add Words</strong>: Edit newline-separated word lists stored in <code>localStorage</code> (<code>ignore_words</code> / <code>add_words</code>). Press <i class="fa-solid fa-a icon-green"></i> to save or <i class="fa-solid fa-square-caret-left icon-grey"></i> <strong>Select</strong> to cancel.</p>
+                    <p><strong>Check Book Spelling</strong> / <strong>Check Part Spelling</strong>: Enter Checking Mode scoped to the entire book or the current part.</p>
+
+                    <h3>Checking Mode</h3>
+                    <p>A top-left gutter displays the <strong>Part / Book</strong> toggle and current error counter, with a corrections dropdown below the active segment.</p>
+                    <p><i class="fa-solid fa-arrows-left-right icon-purple"></i> <strong>Left / Right</strong>: Navigate errors</p>
+                    <p><i class="fa-solid fa-arrows-up-down icon-purple"></i> <strong>Up / Down</strong>: Navigate corrections</p>
+                    <p><strong>RB</strong>: Replace segment with selected correction &amp; advance</p>
+                    <p><i class="fa-solid fa-y icon-yellow"></i>: Add word to Ignore Words &amp; advance</p>
+                    <p><i class="fa-solid fa-x icon-blue"></i>: Delete segment &amp; exit to Editor</p>
+                    <p><i class="fa-solid fa-a icon-green"></i>: Replace segment with space &amp; exit to Editor</p>
+                    <p><i class="fa-solid fa-b icon-red"></i>: Replace segment with newline &amp; exit to Editor</p>
+                    <p><strong>LB</strong>: Backspace last character &amp; exit to Editor</p>
+                    <p><i class="fa-solid fa-square-caret-right icon-grey"></i> <strong>Start</strong>: Return to Spelling Menu</p>
+                    <p><i class="fa-solid fa-square-caret-left icon-grey"></i> <strong>Select</strong>: Exit to Overview Mode</p>
+                `
             }
         ];
 
