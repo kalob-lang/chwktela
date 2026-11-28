@@ -1,6 +1,6 @@
 # uywng Chwktela
 
-![uywng Chwktela Logo](public/chwktela.jpeg)
+![uywng Chwktela Logo](public/chwktela_icon_small.png)
 
 A gamepad-only [Kalob](https://kalob-lang.github.io) text editor designed for efficient, controller-based writing and text manipulation.
 
