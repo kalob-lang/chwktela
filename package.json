@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "idb-keyval": "^6.2.2",
-    "kalob-spell": "^0.1.1"
+    "kalob-spell": "^0.2.0"
   }
 }
