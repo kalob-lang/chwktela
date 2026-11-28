@@ -136,7 +136,7 @@ export class CheckingMode extends TextEntryMode {
             }
         }
 
-        this.corrections = this.spellChecker.getCorrections(err.segment);
+        this.corrections = this.spellChecker.getCorrections(err);
         this.selectedCorrectionIndex = 0;
 
         this._renderCurrentState();

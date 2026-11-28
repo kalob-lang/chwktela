@@ -7,13 +7,14 @@ import {
   suffixesArray,
   strictNounRootsArray,
 } from 'kalob-spell';
+import { fromLatin, toLatin, toLatinWithMap } from '../scripts/ScriptRegistry.js';
 
 export const IGNORE_WORDS_STORAGE_KEY = 'ignore_words';
 export const ADD_WORDS_STORAGE_KEY = 'add_words';
 
 const CITATION_REGEX = /\{\{cite:.*?\}\}/g;
-const LOOKBEHIND = '(?<=^|[\\s\\-"\'“«<¿])';
-const LOOKAHEAD = '(?=[\\s\\.,;:\\-"\'”»>?]|$)';
+const LOOKBEHIND = '(?<=^|[\\s\\-–"\'“«<¿⟮⟪｢⟨､⸵])';
+const LOOKAHEAD = '(?=[\\s\\.,;:!?\\-–"\'”»>⟯⟫｣⟩､⸵]|$)';
 const WORD_REGEX = new RegExp(`${LOOKBEHIND}\\p{Letter}+${LOOKAHEAD}`, 'gv');
 
 // Mirror compound part rules from kalob-spell / machka SpellCheckEditor.tsx
@@ -63,12 +64,25 @@ export function normalizeWordListText(text) {
 }
 
 export class SpellChecker {
-  constructor(storage = typeof localStorage !== 'undefined' ? localStorage : null) {
+  constructor(
+    storage = typeof localStorage !== 'undefined' ? localStorage : null,
+    getScriptName = () => 'Latin'
+  ) {
     this.storage = storage;
+    this.getScriptName = typeof getScriptName === 'function' ? getScriptName : () => 'Latin';
     this.kalobSpell = createKalobSpell({
       storageKey: false,
-      customWords: () => this.getAddWords(),
+      customWords: () => this.getAddWordsLatin(),
     });
+  }
+
+  setGetScriptName(fn) {
+    this.getScriptName = typeof fn === 'function' ? fn : () => 'Latin';
+    this.kalobSpell.refresh();
+  }
+
+  _resolveScriptName(scriptName) {
+    return scriptName || this.getScriptName() || 'Latin';
   }
 
   _readStorage(key) {
@@ -103,8 +117,17 @@ export class SpellChecker {
     return parseWordList(this.getIgnoreWordsText());
   }
 
-  getIgnoreWordsSet() {
-    return new Set(this.getIgnoreWords().map((w) => w.toLowerCase()));
+  getIgnoreWordsSet(scriptName) {
+    const activeScript = this._resolveScriptName(scriptName);
+    const set = new Set();
+    for (const entry of this.getIgnoreWords()) {
+      set.add(entry.toLowerCase());
+      const decoded = toLatin(entry, activeScript).trim();
+      if (decoded) {
+        set.add(decoded.toLowerCase());
+      }
+    }
+    return set;
   }
 
   addIgnoreWord(word) {
@@ -134,8 +157,22 @@ export class SpellChecker {
     return parseWordList(this.getAddWordsText());
   }
 
-  getAddWordsSet() {
-    return new Set(this.getAddWords().map((w) => w.toLowerCase()));
+  getAddWordsLatin(scriptName) {
+    const activeScript = this._resolveScriptName(scriptName);
+    const results = [];
+    const seen = new Set();
+    for (const entry of this.getAddWords()) {
+      const latin = toLatin(entry, activeScript).trim();
+      if (latin && !seen.has(latin.toLowerCase())) {
+        seen.add(latin.toLowerCase());
+        results.push(latin);
+      }
+    }
+    return results;
+  }
+
+  getAddWordsSet(scriptName) {
+    return new Set(this.getAddWordsLatin(scriptName).map((w) => w.toLowerCase()));
   }
 
   _isSegmentValid(seg, { isFirst, isLast, hasLeadingU, ignoredSet, addedSet }) {
@@ -171,7 +208,6 @@ export class SpellChecker {
       ];
     }
 
-    // Split by 'u' glue while tracking exact offsets in the original word
     const rawParts = [];
     let start = 0;
     for (let i = 0; i <= lower.length; i++) {
@@ -213,7 +249,6 @@ export class SpellChecker {
       const isLast = i === activeParts.length - 1;
 
       if (part.text === '') {
-        // Double 'uu' in the middle of a compound
         const errFrom = Math.max(0, part.start - 1);
         const errTo = Math.min(word.length, part.end + 1);
         errors.push({
@@ -261,16 +296,23 @@ export class SpellChecker {
     return errors;
   }
 
-  checkText(content) {
+  checkText(content, scriptName) {
     if (!content) return [];
 
-    const ignoredSet = this.getIgnoreWordsSet();
-    const addedSet = this.getAddWordsSet();
+    const activeScript = this._resolveScriptName(scriptName);
+    // Refresh index if active script changed since last check
+    this.kalobSpell.refresh();
+
+    const { text: latinText, spanMap } = toLatinWithMap(content, activeScript);
+    if (!latinText) return [];
+
+    const ignoredSet = this.getIgnoreWordsSet(activeScript);
+    const addedSet = this.getAddWordsSet(activeScript);
 
     const citationSpans = [];
     let citeMatch;
     CITATION_REGEX.lastIndex = 0;
-    while ((citeMatch = CITATION_REGEX.exec(content)) !== null) {
+    while ((citeMatch = CITATION_REGEX.exec(latinText)) !== null) {
       citationSpans.push({
         from: citeMatch.index,
         to: citeMatch.index + citeMatch[0].length,
@@ -278,7 +320,7 @@ export class SpellChecker {
     }
 
     const errors = [];
-    for (const match of content.matchAll(WORD_REGEX)) {
+    for (const match of latinText.matchAll(WORD_REGEX)) {
       const word = match[0];
       const wordFrom = match.index;
       const wordTo = wordFrom + word.length;
@@ -299,7 +341,23 @@ export class SpellChecker {
       }
 
       const segmentErrors = this._checkCompoundSegments(word, wordFrom, ignoredSet, addedSet);
-      errors.push(...segmentErrors);
+      for (const segErr of segmentErrors) {
+        const origFrom = spanMap[segErr.from]?.start ?? segErr.from;
+        const origTo = spanMap[segErr.to - 1]?.end ?? segErr.to;
+        const origWordFrom = spanMap[segErr.wordFrom]?.start ?? segErr.wordFrom;
+        const origWordTo = spanMap[segErr.wordTo - 1]?.end ?? segErr.wordTo;
+
+        errors.push({
+          from: origFrom,
+          to: origTo,
+          segment: content.slice(origFrom, origTo),
+          word: content.slice(origWordFrom, origWordTo),
+          wordFrom: origWordFrom,
+          wordTo: origWordTo,
+          latinSegment: segErr.segment,
+          latinWord: segErr.word,
+        });
+      }
     }
 
     return errors;
@@ -313,18 +371,19 @@ export class SpellChecker {
         return { key, x, y, part };
       })
       .sort((a, b) => {
-        if (b.y !== a.y) return b.y - a.y; // Top-to-bottom (Y+ is Up)
-        return a.x - b.x; // Left-to-right
+        if (b.y !== a.y) return b.y - a.y;
+        return a.x - b.x;
       });
   }
 
-  checkBook(bookManager) {
+  checkBook(bookManager, scriptName) {
+    const activeScript = this._resolveScriptName(scriptName || bookManager?.metadata?.writingSystem);
     const ordered = this.getOrderedPartEntries(bookManager);
     const byPart = new Map();
     const allErrors = [];
 
     for (const entry of ordered) {
-      const partErrors = this.checkText(entry.part?.content || '');
+      const partErrors = this.checkText(entry.part?.content || '', activeScript);
       byPart.set(entry.key, partErrors);
       for (const err of partErrors) {
         allErrors.push({
@@ -343,21 +402,33 @@ export class SpellChecker {
     };
   }
 
-  getCorrections(segment, limit = 8) {
-    const clean = (segment || '').trim();
+  getCorrections(segmentOrError, limit = 8, scriptName) {
+    const activeScript = this._resolveScriptName(scriptName);
+    const rawSegment =
+      typeof segmentOrError === 'object' && segmentOrError !== null
+        ? segmentOrError.segment || ''
+        : segmentOrError || '';
+    const latinSource =
+      typeof segmentOrError === 'object' && segmentOrError !== null && segmentOrError.latinSegment
+        ? segmentOrError.latinSegment
+        : toLatin(rawSegment, activeScript);
+
+    const clean = latinSource.trim();
     if (!clean) return [];
+
+    this.kalobSpell.refresh();
 
     const lower = clean.toLowerCase();
     const candidates = new Map();
 
-    const addCandidate = (word, item, score) => {
-      const wLower = word.toLowerCase();
+    const addCandidate = (latinWord, item, score) => {
+      const wLower = latinWord.toLowerCase();
       if (wLower === lower) return;
-      if (!this.kalobSpell.check(word)) return;
+      if (!this.kalobSpell.check(latinWord)) return;
       const existing = candidates.get(wLower);
       if (!existing || score < existing.score) {
         candidates.set(wLower, {
-          word,
+          latinWord,
           eng: item.eng || '',
           cat: item.cat || '',
           pos: item.pos || '',
@@ -370,7 +441,6 @@ export class SpellChecker {
       addCandidate(res.item.word, res.item, res.score ?? 0.4);
     }
 
-    // Try stripping optional leading vowel prefix [aeiouvw]
     if (/^[aeiouvw]/.test(lower) && lower.length >= 3) {
       const prefix = lower[0];
       const stem = lower.slice(1);
@@ -379,7 +449,6 @@ export class SpellChecker {
       }
     }
 
-    // Try stripping optional trailing primary ending [eioavw]?(zh|j)?
     const endingMatch = lower.match(/^(.{2,}?)([eioavw]?(?:zh|j)|[eioavw])$/);
     if (endingMatch) {
       const [, stem, ending] = endingMatch;
@@ -388,10 +457,23 @@ export class SpellChecker {
       }
     }
 
-    return Array.from(candidates.values())
-      .sort((a, b) => a.score - b.score)
-      .slice(0, limit)
-      .map(({ word, eng, cat, pos }) => ({ word, eng, cat, pos }));
+    const seenDisplay = new Set();
+    const out = [];
+    for (const cand of Array.from(candidates.values()).sort((a, b) => a.score - b.score)) {
+      const displayWord = fromLatin(cand.latinWord, activeScript);
+      if (displayWord === rawSegment || seenDisplay.has(displayWord)) continue;
+      seenDisplay.add(displayWord);
+      out.push({
+        word: displayWord,
+        latinWord: cand.latinWord,
+        eng: cand.eng,
+        cat: cand.cat,
+        pos: cand.pos,
+      });
+      if (out.length >= limit) break;
+    }
+
+    return out;
   }
 }
 

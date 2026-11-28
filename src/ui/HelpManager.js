@@ -118,6 +118,7 @@ export class HelpManager {
                 text: `
                     <h3>Enabling &amp; Indicators</h3>
                     <p>Enable <strong>Spellcheck</strong> in the Settings menu to validate Kalob words and <code>u</code>-glued compounds across the book via <code>kalob-spell</code>.</p>
+                    <p>Non-Latin scripts (such as <strong>Abugida</strong>) are automatically converted to Latin for checking and translated back into the active script in the corrections dropdown.</p>
                     <p>When enabled, the <strong>Check Mode</strong> icon appears next to the Case Mode icon (<i class="fa-solid fa-circle-check"></i> when clean, <i class="fa-solid fa-circle-exclamation"></i> when errors exist) with an error count badge in Editor Mode.</p>
                     <p>Erroneous segments are highlighted with a red box in Editor and Checking modes, and Overview Mode highlights parts with errors and shows an error count badge in the lower-right corner.</p>
 

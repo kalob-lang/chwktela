@@ -82,7 +82,10 @@ document.querySelector('#app').innerHTML = `
 const settingsManager = new SettingsManager(); // Keep this for config
 const gamepadManager = new GamepadManager();
 const typingEngine = new TypingEngine();
-const spellChecker = new SpellChecker();
+const spellChecker = new SpellChecker(
+  typeof localStorage !== 'undefined' ? localStorage : null,
+  () => bookManager.metadata?.writingSystem || typingEngine.currentMappingName || 'Latin'
+);
 // settingsManager.setTypingEngine(typingEngine); // Removed (Moved to BookMenu)
 const editorRenderer = new EditorRenderer('editor-view', typingEngine, settingsManager, spellChecker);
 const gamepadMenu = new GamepadMenu();
@@ -589,6 +592,7 @@ bookMenu.onAction = (action) => {
     // Re-render
     const part = bookManager.getCurrentPart();
     if (part) editorRenderer.render(part);
+    updateCheckIndicator();
   } else if (action === 'new') {
     inputRouter.requestConfirm('Create new book? Unsaved changes will be lost.', () => {
       // Get Defaults from Mapping

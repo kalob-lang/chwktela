@@ -104,6 +104,7 @@ Hold both **LT + RT** to access the `PUNCTUATION` layers defined by the active w
 
 ### Spellcheck (`SPELLCHECK_MENU` & `CHECKING` Modes)
 - **Enable**: Toggle **Spellcheck** in Settings. When enabled, the Check Mode icon (`fa-circle-check` / `fa-circle-exclamation`) appears next to the Case Mode icon in the bottom bar (with a lower-right error count badge in Editor Mode).
+- **Script Conversion (`src/scripts/`)**: Non-Latin writing systems (such as **Abugida**) are converted back to Latin before spellchecking while preserving exact character-span offsets for error highlighting and replacements, and correction suggestions in the dropdown are converted back to the active script before display/application.
 - **Highlights & Badges**: Unrecognized Kalob lexemes and invalid `u`-glued compound segments are shown in red boxes in Editor and Checking modes; Overview Mode outlines parts with errors in red and displays an error count badge in the lower-right corner.
 - **Spelling Menu (`SPELLCHECK_MENU`)**: Open by clicking the Check Mode icon or selecting it in Gutter Mode (right from Book, or left from Export Logs / Gamepad):
   - **Ignore Words** / **Add Words**: Opens a newline-separated editor backed by `localStorage` (`ignore_words` / `add_words`). Press **South (A)** to save (instead of inserting a space) or **Select** to cancel.
@@ -178,6 +179,21 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
 - **PUNCTUATION**: An array of `{ LEFT, RIGHT }` character map layers (or a single object) used when both triggers are held. While holding both triggers, clicking **Y** rotates through the layers (wrapping back to the first layer).
 
 > **Combining-Mark Mappings**: Whenever a mapping entry contains two glyphs where one is a normal glyph and the other is a combining mark (such as `◌̲` or `ı̂`), triggering it enters the full 2-codepoint string when there is no preceding letter, and enters only the combining mark when a preceding letter (including a letter that already has combining marks) immediately precedes the cursor — unless `"CASE_MODE": "break"` is active (`caseMode` `1` or `2`).
+
+### Script Converters for Spellchecking (`src/scripts/`)
+
+Spellchecking and `kalob-spell` operate on Latin Kalob lexemes. Whenever you add a custom mapping at `src/mappings/<Name>.json`, you should also provide a bidirectional conversion path between Latin and that script so spellchecking, error highlighting, `ignore_words` / `add_words`, and dropdown corrections work in your script:
+
+1. **Auto-discovered Script Module**: Create `src/scripts/<Name>Script.js` exporting a converter object (default export or named export alongside `export const scriptName = '<Name>'`). `ScriptRegistry.js` automatically loads all `*Script.js` files matching the mapping name (same `<Name>` as `src/mappings/<Name>.json`).
+2. **Programmatic Registration**: Alternatively, register a converter at runtime with `registerScript('<Name>', converter)` from `src/scripts/ScriptRegistry.js`.
+3. **Converter Interface**:
+   - `toLatin(text)`: Converts text in the target script to Latin Kalob.
+   - `toLatinWithMap(text)` *(recommended for scripts with multi-character glyphs, combining marks, or delimiters)*: Returns `{ text, spanMap }`, where each index `i` of the returned Latin `text` maps to `{ start, end }` in the original script string so red error boxes and replacements (`RB`, `X`, `A`, `B`, `LB`) align cleanly to the original glyphs. If omitted, `ScriptRegistry` wraps `toLatin` with a fallback span map.
+   - `fromLatin(latinText)`: Converts Latin correction suggestions from `kalob-spell` back into the target script for the Checking Mode dropdown and replacement.
+
+#### Built-in `Abugida` Converter (`src/scripts/AbugidaScript.js`)
+- **Latin → Abugida (`convertToAbugida` / `convertToCypher` / `convertChunk`)**: Uses the sequential cypher and combining vowel diacritic maps (`cypherMap`, `vowelDiac`), inserting onset anchor `ı` for vowel-initial syllables and applying the `:` shortcut for onset `u` (`ı\u0308` → `:`).
+- **Abugida → Latin (`convertFromAbugida` / `decodeCypher` / `convertFromAbugidaWithMap`)**: NFD-normalizes clusters so aspiration marks (`U+0331` / `U+0332`) precede vowel diacritics, expands `:` to `u`, merges onset-anchored vowels (`ı` + diacritic), unwraps quotes (`« ... »` / `｢ ... ｣`) and noun delimiters (`⟨ ... ⟩`), leaves untransliterated uppercase proper nouns and `{{cite:x,y}}` tags intact, and preserves original UTF-16 character spans.
 
 ## Roadmap
 
