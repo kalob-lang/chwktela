@@ -165,13 +165,6 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
 - [x] Home/End/Top/Bottom navigation keys
 - [x] In Editor Mode, part navigation using Select + D-Pad
 - [x] Add a joystick layer for symbols/numbers
-- [ ] New buffer style (called Navigator, now there are 3 buffer styles: Editor, Navigator, and Overview) used for FINDING and CHECKING modes
-    - The buffer fills the space that Editor and Overview utilize
-    - The buffer containers a header and a main content area
-    - In FINDING mode, the header contains a search box and search result location indicator
-    - In CHECKING mode, the header contains a spelling error location indicator
-    - The main content area contains something like an editor but one word or phrase is highlighted (either the text being searched for or the misspelled word)
-    - 
 - [ ] New Modes: SEARCH_MENU, FINDING
     - An icon <i class="fa-solid fa-magnifying-glass"></i> is next to the Case Mode icon
     - When clicked, it opens the Search Menu (SEARCH_MENU mode)
@@ -179,39 +172,40 @@ You can define custom input mappings by creating a `.json` file in `src/mappings
         - Search Part: A button for entering FINDING mode (uses the new buffer style), set to search within the current part
         - Search Book: A button for entering FINDING mode (uses the new buffer style), set to search within the current book
         - Done: A button for returning to the Gutter (GUTTER mode)
+    - 
     - In FINDING mode, the user is in the editor buffer and can use standard editor input mappings except for the following:
         - 
 - [ ] New Modes: SPELLCHECK_MENU, CHECKING
     - Spellchecking is toggleable in the Settings menu
-    - When enabled, an icon will appear next to the Search icon
+    - When spellchecking is enabled, an icon will appear next to the Case Mode icon (called the Check Mode icon)
         - If there are spelling errors, it will be a <i class="fa-solid fa-circle-exclamation"></i> icon
         - If there are no spelling errors, it will be a <i class="fa-solid fa-circle-check"></i> icon
-    - When enabled, spelling errors will be tracked across all parts in the book and will have a red squiggly underline in EDITOR and CHECKING modes.
-    - When enabled, the amount of spelling errors will be displayed as a badge on the Spelling Mode icon
-    - Clicking on the Spelling Mode icon will open the Spelling Menu (SPELLCHECK_MENU mode)
+    - When spellchecking is enabled, spelling errors will be tracked across all parts in the book and each error will have a red highlighted box in EDITOR and CHECKING modes. In the OVERVIEW mode, when a part has errors, a red highlight will appear around the part cell and a badge in the lower right corner will count the number of errors.
+    - When spellchecking is enabled and the user is inside of the EDITOR mode, the amount of spelling errors will be displayed as a badge in the lower right corner of the Check Mode icon
+    - Clicking on the Check Mode icon (or navigating to it through the gutter navigation) will open the Spelling Menu (SPELLCHECK_MENU mode)
     - In the Spelling Menu, the following options will be available:
-        - Ignored Words: A button that opens a scrollable list modal (IGNORED_WORDS mode) of words that will be ignored by the spellchecker (hit X to remove from list, hit B to return to Spelling Menu, Start to return to Gutter)
-        - Hunspell File: A dropdown menu for selection which Hunspell file to use (populates with files in the `dictionaries` directory)
-        - Check Spelling: A button for entering CHECKING mode (almost entirely the same as Editor mode, but with some different button shortcuts)
+        - Ignore Words: A button that opens an EDITOR mode that contains a newline-separated list of words that will be ignored by the spellchecker (each row in the file will represent an ignored word; hitting A, instead of adding a space, saves the list; Select to cancel). This ignore_words part is stored in localStorage.
+        - Add Words: A button that opens an EDITOR mode that contains a newline-separated list of words that will be added to the autocomplete (each row in the file represents an added word; hitting A, instead of adding a space, saves the list; Select to cancel). This add_words part is stored in localStorage.
+        - Check Book Spelling: A button for entering CHECKING mode (almost entirely the same as Editor mode, but with some different button shortcuts)
+        - Check Part Spelling: A button for entering CHECKING mode (same as Check Book Spelling but limits the check to only the current part)
         - Done: A button for returning to the Gutter (GUTTER mode)
-    - No Editor Mode shortcut for entering CHECKING mode, nav to it from the gutter
-    - Upon entering CHECKING mode, the cursor will move to the first error in the part, or the first error in the book if no errors are found in the part
-    - When Gutter Mode is active, go right from the Book icon to get to it
-    - When Gutter Mode is active, go left from Export Logs icon (if Developer Mode is active) or Gamepad icon to get to it
-    - When Gutter Mode is active and the Spelling Icon is selected, hit A to open the Spelling Menu (SPELLCHECK_MENU mode)
-    - When CHECKING Mode is active, Left/Right D-pad buttons navigate from one error to another in the current part only, moving the cursor to the erroneous word in the editor
-    - When CHECKING Mode is active, Y (North) + Left/Right D-pad buttons navigate from one error to another in the entire book, moving the cursor to the erroneous word in the editor (and the current part will change to the part containing the error)
-    - When an error has been navigated to
-        - A list of possible corrections is displayed in a dropdown menu below the erroneous word
+    - Upon entering CHECKING mode, a small gutter will drop down in the top left corner of the main editor space. It has a toggle between Part and Book that aligns with which button they clicked in the SPELLCHECK_MENU mode. It will display the number of errors in the current part or book and the current error number that the user is located at.
+    - Upon entering CHECKING mode, the cursor will move to the first error in the part or the first error in the book (depending on which was selected in the SPELLCHECK_MENU mode)
+    - When CHECKING Mode is active, Left/Right D-pad buttons navigate from one error to another in either the current part or the whole book (depending on which was selected in the SPELLCHECK_MENU mode), moving the cursor to the erroneous word in the editor and changing the error number in the small upper left gutter.
+    - In Kalob, compound words are roots glued together by "u" and there are also a set of suffixes that can be added. Spellchecking works by looking to see if the whole word is valid but if that fails it then checks to see if each segment is valid.
+    - Following the examples in @machka, each lexeme should be spellchecked separately and the errors should be reported at the segment level.
+    - When an error in a particular segment is identified and has been navigated to
+        - A list of possible corrections for that given segment is displayed in a dropdown menu below the erroneous segment
         - Use the Up/Down D-Pad buttons to navigate the list of corrections
         - If no corrections are found, the dropdown menu will display "No Corrections"
-        - X (East) button deletes the erroneous word and moves the cursor to the next error
-        - A (South) button replaces the erroneous word with a space (and moves the cursor to the right)
-        - B (West) button returns to the Spelling Menu (SPELLCHECK_MENU mode)
-        - Y (North) button adds the erroneous word to the list of ignored words
-        - LB (Left Shoulder) button acts as backspace to delete the last character of the erroneous word (and moves the cursor left)
-        - RB (Right Shoulder) button replaces the erroneous word with the selected correction (and moves the cursor to the next error)
-        - NOTE: A and LB are normal EDITOR mode behaviors in CHECKING mode because they are used for typing the corrections
+        - The X button deletes the erroneous segment and exits CHECKING mode at that location
+        - The A button replaces the erroneous segment with a space (and moves the cursor to the right, exiting CHECKING mode)
+        - The B button replaces the erroneous segment with a newline (and moves the cursor to the newline, exiting CHECKING mode)
+        - The Start button returns to the Spelling Menu (SPELLCHECK_MENU mode)
+        - The Select button returns to the OVERVIEW mode and exists CHECKING mode.
+        - The Y button adds the erroneous word to the list of ignored words and moves the cursor to the next error in the part or book, if there are any.
+        - LB (Left Shoulder) button acts as backspace to delete the last character of the erroneous word (and moves the cursor left, exiting CHECKING mode)
+        - RB (Right Shoulder) button replaces the erroneous segment with the selected correction (and moves the cursor to the next error)
 - [ ] Allow parts to be external links to websites that load in an iframe
 
 ## License

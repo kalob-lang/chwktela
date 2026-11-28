@@ -1,29 +1,71 @@
-
 export class EditorRenderer {
-    constructor(elementId, typingEngine, settingsManager) {
+    constructor(elementId, typingEngine, settingsManager, spellChecker = null) {
         this.container = document.getElementById(elementId);
         this.typingEngine = typingEngine;
         this.settingsManager = settingsManager;
+        this.spellChecker = spellChecker;
     }
 
-    render(part, selectionAnchor = null, isModifierHeld = false) {
+    setSpellChecker(spellChecker) {
+        this.spellChecker = spellChecker;
+    }
+
+    _escapePlain(str) {
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\n/g, '<br>')
+            .replace(/ /g, '&nbsp;');
+    }
+
+    _renderTextWithCitations(str) {
+        return this._escapePlain(str).replace(
+            /\{\{cite:(-?\d+),(-?\d+)\}\}/g,
+            '<span class="citation-pill">$1 . $2</span>'
+        );
+    }
+
+    _renderSliceWithCursor(content, start, end, cursor, pendingHtml, cursorType, cursorSubClass) {
+        if (cursor === null || cursor < start || cursor >= end) {
+            return this._renderTextWithCitations(content.slice(start, end));
+        }
+
+        const before = content.slice(start, cursor);
+        const after = content.slice(cursor, end);
+
+        let html = this._renderTextWithCitations(before);
+        html += pendingHtml;
+
+        if (cursorType === 'BAR') {
+            html += `<span class="cursor ${cursorSubClass}"></span>`;
+            html += this._renderTextWithCitations(after);
+        } else {
+            const match = /^\{\{cite:(-?\d+),(-?\d+)\}\}/.exec(after);
+            if (match) {
+                const x = match[1];
+                const y = match[2];
+                const rest = after.slice(match[0].length);
+                html += `<span class="citation-pill cursor ${cursorSubClass} cursor-atomic">${x} . ${y}</span>`;
+                html += this._renderTextWithCitations(rest);
+            } else if (after.length > 0) {
+                const targetChar = after[0];
+                const rest = after.slice(1);
+                html += `<span class="cursor ${cursorSubClass}">${this._escapePlain(targetChar)}</span>`;
+                html += this._renderTextWithCitations(rest);
+            }
+        }
+
+        return html;
+    }
+
+    render(part, selectionAnchor = null, isModifierHeld = false, renderOptions = {}) {
         if (!this.container || !part) return;
 
         const content = part.content || "";
         const cursor = part.cursor || 0;
 
-        // HTML Escaping & Citation Rendering
-        const safeEscape = (str) => {
-            let escaped = str.replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/\n/g, '<br>')
-                .replace(/ /g, '&nbsp;');
-
-            // Render Citations: {{cite:x,y}} -> Pill
-            return escaped.replace(/\{\{cite:(-?\d+),(-?\d+)\}\}/g, '<span class="citation-pill">$1 . $2</span>');
-        };
-
+        const safeEscape = (str) => this._renderTextWithCitations(str);
         const processText = safeEscape;
         const esc = safeEscape;
 
@@ -32,13 +74,10 @@ export class EditorRenderer {
         let pendingHtml = '';
 
         if (pending) {
-            // CORRECTION: typingEngine.mappings IS the object.
             const mapping = this.typingEngine.mappings;
             const brackets = mapping?.STAGING_BRACKETS || "";
             const open = brackets.length >= 1 ? brackets[0] : "";
             const close = brackets.length >= 2 ? brackets[1] : "";
-            // User said "instead of using bold text", which implies structure change.
-            // We keep the class for potential color/styling, but formatting changes.
             pendingHtml = `<span class="pending-text">${open}${esc(pending)}${close}</span>`;
         }
 
@@ -46,10 +85,19 @@ export class EditorRenderer {
         const anchor = selectionAnchor;
         const isSelectionActive = (anchor !== undefined && anchor !== null && anchor !== cursor);
 
+        const spellcheckEnabled =
+            !renderOptions.disableSpellcheck &&
+            (renderOptions.forceSpellcheck || Boolean(this.settingsManager?.config?.spellcheck));
+
+        const errors = spellcheckEnabled
+            ? (renderOptions.errors ?? (this.spellChecker ? this.spellChecker.checkText(content) : []))
+            : [];
+
+        const activeError = renderOptions.activeError || null;
+
         let html = "";
 
         if (isSelectionActive) {
-            // Range Selection
             const start = Math.min(anchor, cursor);
             const end = Math.max(anchor, cursor);
 
@@ -59,15 +107,11 @@ export class EditorRenderer {
 
             html = processText(preSelect);
             html += `<span class="selection-highlight">${esc(range)}</span>`;
-
-            // Note: Legacy code just highlighted. Assuming no cursor indicator needed in selection for now to match exactly.
             html += processText(postSelect);
-        } else {
-            // Standard Cursor Logic
+        } else if (errors.length === 0) {
             const before = content.slice(0, cursor);
             const after = content.slice(cursor);
 
-            // Determine Cursor Type
             const cursorType = this.settingsManager?.config?.cursorType || 'BAR';
             let cursorSubClass = 'cursor-bar';
             if (cursorType === 'BLOCK') cursorSubClass = 'cursor-block';
@@ -80,29 +124,84 @@ export class EditorRenderer {
                 html += `<span class="cursor ${cursorSubClass}"></span>`;
                 html += processText(after);
             } else {
-                // Block/Underline logic
                 if (after.length > 0) {
-                    // Check for citation at start of 'after'
                     const match = /^\{\{cite:(-?\d+),(-?\d+)\}\}/.exec(after);
 
                     if (match) {
-                        // ATOMIC RENDER: Merge classes
                         const x = match[1];
                         const y = match[2];
                         const rest = after.slice(match[0].length);
-
-                        // Render the pill WITH the cursor class
                         html += `<span class="citation-pill cursor ${cursorSubClass} cursor-atomic">${x} . ${y}</span>`;
                         html += processText(rest);
                     } else {
-                        // Standard Char
                         const targetChar = after[0];
                         const rest = after.slice(1);
                         html += `<span class="cursor ${cursorSubClass}">${processText(targetChar)}</span>`;
                         html += processText(rest);
                     }
                 } else {
-                    // End of file
+                    html += `<span class="cursor ${cursorSubClass}">&nbsp;</span>`;
+                }
+            }
+        } else {
+            const cursorType = this.settingsManager?.config?.cursorType || 'BAR';
+            let cursorSubClass = 'cursor-bar';
+            if (cursorType === 'BLOCK') cursorSubClass = 'cursor-block';
+            if (cursorType === 'UNDERLINE') cursorSubClass = 'cursor-underline';
+
+            const sortedErrors = [...errors].sort((a, b) => a.from - b.from);
+            let pos = 0;
+
+            for (const err of sortedErrors) {
+                if (err.from < pos) continue;
+
+                if (pos < err.from) {
+                    html += this._renderSliceWithCursor(
+                        content,
+                        pos,
+                        err.from,
+                        cursor,
+                        pendingHtml,
+                        cursorType,
+                        cursorSubClass
+                    );
+                }
+
+                const isActive =
+                    activeError &&
+                    activeError.from === err.from &&
+                    activeError.to === err.to;
+                const cls = isActive ? 'spell-error spell-error-active' : 'spell-error';
+                const errInner = this._renderSliceWithCursor(
+                    content,
+                    err.from,
+                    err.to,
+                    cursor,
+                    pendingHtml,
+                    cursorType,
+                    cursorSubClass
+                );
+                html += `<span class="${cls}">${errInner}</span>`;
+                pos = err.to;
+            }
+
+            if (pos < content.length) {
+                html += this._renderSliceWithCursor(
+                    content,
+                    pos,
+                    content.length,
+                    cursor,
+                    pendingHtml,
+                    cursorType,
+                    cursorSubClass
+                );
+            }
+
+            if (cursor >= content.length) {
+                html += pendingHtml;
+                if (cursorType === 'BAR') {
+                    html += `<span class="cursor ${cursorSubClass}"></span>`;
+                } else {
                     html += `<span class="cursor ${cursorSubClass}">&nbsp;</span>`;
                 }
             }

@@ -4,8 +4,9 @@ export class Gutter {
         this.config = config || {};
 
         // Define items (order matches UI)
-        // Export | Settings | New | Save | Open
+        // Check Mode (when enabled) | Export | Gamepad | Settings | Help | Book Menu
         this.items = [
+            'check-mode-btn',
             'export-logs-btn',
             'gamepad-btn',
             'settings-btn',
@@ -13,8 +14,22 @@ export class Gutter {
             'book-menu-btn'
         ];
 
-        this.selectedIndex = this.items.length - 1;
+        const visible = this.getVisibleItems();
+        this.selectedIndex = Math.max(0, visible.length - 1);
         this.isActive = false;
+    }
+
+    getVisibleItems() {
+        return this.items.filter((id) => {
+            if (typeof document === 'undefined') return id !== 'check-mode-btn';
+            const el = document.getElementById(id);
+            if (!el) return id !== 'check-mode-btn';
+            if (el.style.display === 'none') return false;
+            if (typeof window !== 'undefined' && window.getComputedStyle) {
+                return window.getComputedStyle(el).display !== 'none';
+            }
+            return true;
+        });
     }
 
     activate() {
@@ -28,7 +43,7 @@ export class Gutter {
     }
 
     getItemCount() {
-        return this.items.length;
+        return this.getVisibleItems().length;
     }
 
     setSelectedIndex(index) {
@@ -37,8 +52,9 @@ export class Gutter {
     }
 
     triggerAction(index, input) {
-        if (index < 0 || index >= this.items.length) return;
-        const id = this.items[index];
+        const visible = this.getVisibleItems();
+        if (index < 0 || index >= visible.length) return;
+        const id = visible[index];
         const el = document.getElementById(id);
 
         if (el) {
@@ -47,7 +63,7 @@ export class Gutter {
                 el.click();
             } else if (id === 'export-logs-btn') {
                 window.dispatchEvent(new CustomEvent('request-export-logs'));
-                el.click(); // Optional visual feedback
+                el.click();
             } else {
                 el.click();
             }
@@ -57,19 +73,20 @@ export class Gutter {
     render() {
         if (!this.container) return;
 
-        // Toggle visual active state of the bar itself if needed
         if (this.isActive) {
             this.container.classList.add('nav-active');
         } else {
             this.container.classList.remove('nav-active');
         }
 
-        // Update highlight
-        this.items.forEach((id, idx) => {
+        const visible = this.getVisibleItems();
+        const selectedId = this.isActive ? visible[this.selectedIndex] : null;
+
+        this.items.forEach((id) => {
             const el = document.getElementById(id);
             if (!el) return;
 
-            if (this.isActive && idx === this.selectedIndex) {
+            if (this.isActive && id === selectedId) {
                 el.classList.add('nav-selected');
             } else {
                 el.classList.remove('nav-selected');

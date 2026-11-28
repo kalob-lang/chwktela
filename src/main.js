@@ -22,6 +22,10 @@ import { OverviewMode } from './modes/OverviewMode.js';
 
 import { InputRouter } from './input/InputRouter.js';
 import { InputDebugOverlay } from './ui/InputDebugOverlay.js'; // Moved up
+import { SpellChecker } from './spell/SpellChecker.js';
+import { SpellcheckMenu } from './ui/SpellcheckMenu.js';
+import { WordListEditMode } from './modes/WordListEditMode.js';
+import { CheckingMode } from './modes/CheckingMode.js';
 
 document.querySelector('#app').innerHTML = `
   <div class="container">
@@ -51,12 +55,15 @@ document.querySelector('#app').innerHTML = `
     </div>
 
     <div class="editor-container">
+        <div id="checking-gutter" class="checking-gutter" style="display: none;"></div>
         <div id="editor-view" class="custom-editor" tabindex="0"></div>
+        <div id="checking-corrections-dropdown" class="checking-corrections-dropdown" style="display: none;"></div>
     </div>
 
     <div class="bottom-bar" id="bottom-bar">
         <div id="mode-indicator"><i class="fa-solid fa-border-none"></i></div>
         <div id="case-indicator"><i class="fa-regular fa-circle"></i></div>
+        <div id="check-mode-btn" class="settings-trigger check-mode-indicator" title="Spellcheck Menu" style="display: none;"><i class="fa-solid fa-circle-check"></i></div>
         <div class="header-actions">
             <div id="export-logs-btn" class="settings-trigger" title="Export Debug Logs"><i class="fa-solid fa-file-export"></i></div>
             <div id="gamepad-btn" class="settings-trigger" title="Controller Info"><i class="fa-solid fa-gamepad"></i></div>
@@ -75,8 +82,9 @@ document.querySelector('#app').innerHTML = `
 const settingsManager = new SettingsManager(); // Keep this for config
 const gamepadManager = new GamepadManager();
 const typingEngine = new TypingEngine();
+const spellChecker = new SpellChecker();
 // settingsManager.setTypingEngine(typingEngine); // Removed (Moved to BookMenu)
-const editorRenderer = new EditorRenderer('editor-view', typingEngine, settingsManager);
+const editorRenderer = new EditorRenderer('editor-view', typingEngine, settingsManager, spellChecker);
 const gamepadMenu = new GamepadMenu();
 // --- DEBUG OVERLAY ---
 const debugOverlay = new InputDebugOverlay(gamepadManager, typingEngine.mapper);
@@ -160,13 +168,36 @@ bookMenu.setDependencies(bookManager, typingEngine);
 
 const gutter = new Gutter('bottom-bar');
 const gutterMode = new GutterMode({ gutter });
-const gridOverview = new GridOverview('grid-overview', bookManager, historyManager);
+const gridOverview = new GridOverview('grid-overview', bookManager, historyManager, spellChecker, settingsManager);
 const overviewMode = new OverviewMode({
   gridOverview,
   bookManager,
   historyManager,
   focusManager
 });
+const spellcheckMenu = new SpellcheckMenu();
+
+function updateCheckIndicator() {
+  const checkBtn = document.getElementById('check-mode-btn');
+  if (!checkBtn) return;
+
+  if (!settingsManager.config.spellcheck) {
+    checkBtn.style.display = 'none';
+    gutter.render();
+    return;
+  }
+
+  checkBtn.style.display = 'flex';
+  const { totalErrors } = spellChecker.checkBook(bookManager);
+  const iconHtml = totalErrors > 0
+    ? '<i class="fa-solid fa-circle-exclamation check-has-errors"></i>'
+    : '<i class="fa-solid fa-circle-check check-no-errors"></i>';
+  const showBadge = focusManager.mode === 'EDITOR' && totalErrors > 0;
+  const badgeHtml = showBadge ? `<span class="check-error-badge">${totalErrors}</span>` : '';
+
+  checkBtn.innerHTML = `${iconHtml}${badgeHtml}`;
+  gutter.render();
+}
 
 // Hook Menu Close Events
 gamepadMenu.onClose = () => {
@@ -190,6 +221,18 @@ bookMenu.onClose = () => {
     }
   }
 };
+spellcheckMenu.onClose = () => {
+  if (focusManager.mode === 'SPELLCHECK_MENU') {
+    focusManager.setMode('GUTTER');
+    try {
+      const gp = gamepadManager.getActiveGamepad();
+      if (gp && typingEngine.mapper) {
+        const mapped = typingEngine.mapper.map(gp);
+        gutterMode.syncInputState(mapped);
+      }
+    } catch (e) { console.warn("Failed to sync gutter input", e); }
+  }
+};
 
 const editorMode = new EditorMode({
   typingEngine,
@@ -202,6 +245,7 @@ const editorMode = new EditorMode({
   gamepadManager,
   renderer: editorRenderer,
   showNotification: (msg) => showNotification(msg),
+  onContentChange: () => updateCheckIndicator(),
   onVisualSelect: (cursor) => {
     visualSelectMode.enter(cursor);
     focusManager.setMode('VISUAL_SELECT');
@@ -229,6 +273,57 @@ const renamingMode = new RenamingMode({
   visualizer
 });
 
+const wordListEditMode = new WordListEditMode({
+  typingEngine,
+  bookManager,
+  focusManager,
+  editorRenderer,
+  visualizer,
+  gamepadManager,
+  spellChecker,
+  showNotification: (msg) => showNotification(msg),
+  onExitToMenu: (frameInput) => {
+    updateCheckIndicator();
+    focusManager.setMode('SPELLCHECK_MENU');
+    spellcheckMenu.open(frameInput);
+  }
+});
+
+const checkingMode = new CheckingMode({
+  typingEngine,
+  bookManager,
+  historyManager,
+  focusManager,
+  gridOverview,
+  overviewMode,
+  visualizer,
+  gamepadManager,
+  renderer: editorRenderer,
+  spellChecker,
+  showNotification: (msg) => showNotification(msg),
+  onIndicatorsUpdate: () => updateCheckIndicator(),
+  onReturnToSpellMenu: (frameInput) => {
+    updateCheckIndicator();
+    focusManager.setMode('SPELLCHECK_MENU');
+    spellcheckMenu.open(frameInput);
+  }
+});
+
+spellcheckMenu.onAction = (action) => {
+  const gp = gamepadManager.getActiveGamepad();
+  const currentInput = (gp && typingEngine.mapper) ? typingEngine.mapper.map(gp) : null;
+
+  if (action === 'ignore_words') {
+    wordListEditMode.start('ignore_words', currentInput);
+  } else if (action === 'add_words') {
+    wordListEditMode.start('add_words', currentInput);
+  } else if (action === 'check_book') {
+    checkingMode.enter('book', currentInput);
+  } else if (action === 'check_part') {
+    checkingMode.enter('part', currentInput);
+  }
+};
+
 const inputRouter = new InputRouter({
   focusManager,
   gutterMode,
@@ -236,9 +331,12 @@ const inputRouter = new InputRouter({
   editorMode,
   visualSelectMode,
   renamingMode,
+  checkingMode,
+  wordListEditMode,
   settingsManager,
   gamepadMenu,
   bookMenu,
+  spellcheckMenu,
   helpManager,
   gridOverview,
   gamepadManager,
@@ -262,20 +360,34 @@ const calibrationManager = new CalibrationManager(
 focusManager.onChange = (mode) => {
   console.log("Mode changed to:", mode);
 
+  if (mode !== 'CHECKING') {
+    checkingMode.hideUI();
+  }
+
+  const editorViewEl = document.getElementById('editor-view');
+  if (editorViewEl) {
+    editorViewEl.classList.toggle('checking-active', mode === 'CHECKING');
+    const visPlacement = settingsManager.config.visualizerPlacement || 'BOTTOM_CENTER';
+    if (!settingsManager.config.visualizer || !visPlacement.startsWith('TOP')) {
+      editorViewEl.style.paddingTop = mode === 'CHECKING' ? '76px' : '2rem';
+    }
+  }
+
   // Toggle UI visibility based on mode
   if (mode === 'OVERVIEW') {
     overviewMode.activate();
     document.querySelector('.editor-container').style.display = 'none';
     document.getElementById('visualizer-container').style.display = 'none';
-  } else if (mode === 'EDITOR' || mode === 'RENAMING') {
+  } else if (mode === 'EDITOR' || mode === 'RENAMING' || mode === 'CHECKING' || mode === 'WORD_LIST_EDIT') {
     overviewMode.deactivate();
     document.querySelector('.editor-container').style.display = 'flex';
     document.getElementById('visualizer-container').style.display = 'flex';
 
-    // Ensure editor reflects current part content (Only for EDITOR, Renaming handles its own reset)
-    // Ensure editor reflects current part content (Only for EDITOR, Renaming handles its own reset)
+    // Ensure editor reflects current part content (Only for EDITOR, Renaming/Checking/WordList handle their own state)
     if (mode === 'EDITOR') {
       editorMode.resetState();
+      const part = bookManager.getCurrentPart();
+      if (part) editorRenderer.render(part);
     }
   }
 
@@ -285,6 +397,7 @@ focusManager.onChange = (mode) => {
     gutterMode.deactivate();
   }
   updateStatusText(mode);
+  updateCheckIndicator();
 };
 
 // Persistent Status Helper
@@ -302,7 +415,10 @@ function updateStatusText(mode) {
   } else if (mode === 'OVERVIEW') {
     if (modeIcon) modeIcon.innerHTML = '<i class="fa-solid fa-arrows-up-down-left-right"></i>';
     if (caseIcon) caseIcon.style.display = 'flex';
-  } else if (mode === 'EDITOR' || mode === 'RENAMING') {
+  } else if (mode === 'CHECKING') {
+    if (modeIcon) modeIcon.innerHTML = '<i class="fa-solid fa-spell-check"></i>';
+    if (caseIcon) caseIcon.style.display = 'flex';
+  } else if (mode === 'EDITOR' || mode === 'RENAMING' || mode === 'WORD_LIST_EDIT') {
     if (modeIcon) {
       let isModifier = false;
       try {
@@ -364,6 +480,28 @@ function updateStatusText(mode) {
              <strong>Hold any button 5 seconds:</strong> Cancel calibration
         </span>
       `;
+  } else if (mode === 'WORD_LIST_EDIT') {
+    const listTitle = wordListEditMode.targetType === 'add_words' ? 'Add Words' : 'Ignore Words';
+    html = `
+        <span class="notification-persistent">
+            <strong>${listTitle}</strong>&emsp;
+            <i class="fa-solid fa-a icon-green"></i> Save&emsp;
+            <i class="fa-solid fa-square-caret-left icon-grey"></i> <strong>Select:</strong> Cancel
+        </span>
+    `;
+  } else if (mode === 'CHECKING') {
+    html = `
+        <span class="notification-persistent">
+            <i class="fa-solid fa-arrows-left-right icon-purple"></i> Error&emsp;
+            <i class="fa-solid fa-arrows-up-down icon-purple"></i> Fix&emsp;
+            <strong>RB</strong> Apply&emsp;
+            <i class="fa-solid fa-y icon-yellow"></i> Ignore&emsp;
+            <i class="fa-solid fa-x icon-blue"></i> Del&emsp;
+            <i class="fa-solid fa-a icon-green"></i> Space&emsp;
+            <i class="fa-solid fa-b icon-red"></i> Newline&emsp;
+            <strong>LB</strong> Backspace
+        </span>
+    `;
   } else if (mode === 'VISUAL_SELECT') {
     html = `
         <span class="notification-persistent">
@@ -485,6 +623,7 @@ bookMenu.onAction = (action) => {
 
       focusManager.setMode('EDITOR');
       gridOverview.render();
+      updateCheckIndicator();
       showNotification('New Book Created');
     });
   } else if (action === 'save') {
@@ -525,6 +664,7 @@ bookMenu.onAction = (action) => {
 
           focusManager.setMode('EDITOR');
           gridOverview.render();
+          updateCheckIndicator();
           showNotification(`Loaded ${file.name}`);
         } catch (err) {
           console.error(err);
@@ -570,6 +710,18 @@ if (gearBtn) {
       window.dispatchEvent(new CustomEvent('request-export-logs'));
     });
   }
+
+  const checkBtn = document.getElementById('check-mode-btn');
+  if (checkBtn) {
+    checkBtn.addEventListener('click', () => {
+      if (!spellcheckMenu.isOpen) {
+        const gp = gamepadManager.getActiveGamepad();
+        const currentInput = (gp && typingEngine.mapper) ? typingEngine.mapper.map(gp) : null;
+        spellcheckMenu.open(currentInput);
+        focusManager.setMode('SPELLCHECK_MENU');
+      }
+    });
+  }
 }
 
 settingsManager.onUpdate = (config) => {
@@ -612,6 +764,7 @@ settingsManager.onUpdate = (config) => {
       if (placement.startsWith('TOP')) {
         editor.style.paddingTop = '320px';
       } else {
+        editor.style.paddingTop = focusManager.mode === 'CHECKING' ? '76px' : '2rem';
         editor.style.paddingBottom = '320px';
       }
     }
@@ -665,6 +818,10 @@ settingsManager.onUpdate = (config) => {
     const part = bookManager.getCurrentPart();
     if (part) editorRenderer.render(part);
   }
+  updateCheckIndicator();
+  if (focusManager.mode === 'OVERVIEW') {
+    gridOverview.render();
+  }
 };
 
 // Initial Render
@@ -686,6 +843,7 @@ if (gamepadMenu && settingsManager) {
   };
 }
 updateStatusText(focusManager.mode); // Ensure initial status text is shown
+updateCheckIndicator();
 
 
 // Handle Gamepad Connection
@@ -911,6 +1069,7 @@ window.addEventListener('request-citation-insert', (e) => {
       }
 
       updateStatusText(focusManager.mode);
+      updateCheckIndicator();
     }, 100);
   } else {
     // New Session

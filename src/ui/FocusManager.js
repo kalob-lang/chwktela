@@ -11,7 +11,7 @@ export class FocusManager {
 
         // Only track previous mode if it's a "Major" mode
         // Don't track menus as history points
-        const transientModes = ['BOOK_MENU', 'SETTINGS_MENU', 'GAMEPAD_MENU', 'DIALOG_CONFIRM'];
+        const transientModes = ['BOOK_MENU', 'SETTINGS_MENU', 'GAMEPAD_MENU', 'SPELLCHECK_MENU', 'DIALOG_CONFIRM', 'WORD_LIST_EDIT'];
         if (!transientModes.includes(this.mode)) {
             this.previousMode = this.mode;
         }
@@ -59,7 +59,13 @@ export class FocusManager {
             return;
         }
 
-        if (this.mode !== 'EDITOR') {
+        // If in Checking Mode, show spellcheck icon
+        if (this.mode === 'CHECKING') {
+            modeIcon.innerHTML = '<i class="fa-solid fa-spell-check"></i>';
+            return;
+        }
+
+        if (this.mode !== 'EDITOR' && this.mode !== 'WORD_LIST_EDIT') {
             // Default for other modes
             modeIcon.innerHTML = '<i class="fa-solid fa-border-none"></i>';
             return;

@@ -15,6 +15,7 @@
     "vitest": "^4.0.17"
   },
   "dependencies": {
-    "idb-keyval": "^6.2.2"
+    "idb-keyval": "^6.2.2",
+    "kalob-spell": "^0.1.1"
   }
 }

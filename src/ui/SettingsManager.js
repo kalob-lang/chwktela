@@ -9,7 +9,8 @@ export class SettingsManager extends SubMenu {
             debug: true,
             deadzone: 0.5,
             visualizerPlacement: 'BOTTOM_CENTER',
-            cursorType: 'BAR'
+            cursorType: 'BAR',
+            spellcheck: false
         };
 
         this.options = [
@@ -17,6 +18,7 @@ export class SettingsManager extends SubMenu {
             { key: 'visualizerPlacement', label: 'Vis. Placement', type: 'select', values: ['BOTTOM_CENTER', 'BOTTOM_OUTER', 'TOP_CENTER', 'TOP_OUTER'] },
             { key: 'debug', label: 'Developer Mode', type: 'toggle' },
             { key: 'cursorType', label: 'Cursor Type', type: 'select', values: ['BAR', 'BLOCK', 'UNDERLINE'] },
+            { key: 'spellcheck', label: 'Spellcheck', type: 'toggle' },
             { key: 'done', label: 'Done', type: 'action', className: 'done-btn' }
         ];
     }

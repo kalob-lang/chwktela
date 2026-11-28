@@ -14,6 +14,7 @@ export class EditorMode extends TextEntryMode {
         this.showNotification = deps.showNotification; // Callback
         this.onVisualSelect = deps.onVisualSelect; // Callback
         this.onPaste = deps.onPaste; // Callback for testing/external handling
+        this.onContentChange = deps.onContentChange; // Callback when content changes (e.g. spellcheck badge)
 
 
         // State
@@ -139,6 +140,7 @@ export class EditorMode extends TextEntryMode {
                 this.renderIfChanged(this.renderer, part.content, part.cursor, part, this.selectionAnchor);
                 this.typingEngine.reset(newContent);
                 this.lastEngineTextLength = newContent.length;
+                this.onContentChange?.();
 
                 // Prevent TypingEngine from processing this frame's LB
                 // We can't easily mutate frameInput.buttons if it's referenced elsewhere, 
@@ -219,6 +221,8 @@ export class EditorMode extends TextEntryMode {
                         this.updateGoalColumn(p.content, p.cursor);
                         this.renderer.render(p, this.selectionAnchor);
                     }
+                    this.onContentChange?.();
+                    this.onContentChange?.();
                 } else {
                     this.showNotification("Nothing to Undo");
                 }
@@ -255,6 +259,7 @@ export class EditorMode extends TextEntryMode {
                         this.updateGoalColumn(p.content, p.cursor);
                         this.renderer.render(p, this.selectionAnchor);
                     }
+                    this.onContentChange?.();
                 } else {
                     this.showNotification("Nothing to Redo");
                 }
@@ -538,6 +543,7 @@ export class EditorMode extends TextEntryMode {
 
                     this.typingEngine.reset(newContent);
                     this.lastEngineTextLength = newContent.length;
+                    this.onContentChange?.();
                 }
 
                 this.renderer.render(part, this.selectionAnchor);
@@ -574,6 +580,7 @@ export class EditorMode extends TextEntryMode {
                     // If atomic or explicit text change, sync engine
                     this.typingEngine.reset(result.newContent);
                     this.lastEngineTextLength = result.newContent.length;
+                    this.onContentChange?.();
                 } else {
                     // Check if length matches what we thought, mostly for safety
                     this.lastEngineTextLength = result.newLength;
@@ -634,6 +641,7 @@ export class EditorMode extends TextEntryMode {
             this.renderIfChanged(this.renderer, part.content, part.cursor, part, this.selectionAnchor, this.isModifierHeld, this.typingEngine.getFormattedSyllable());
             this.typingEngine.reset(newContent);
             this.lastEngineTextLength = newContent.length;
+            this.onContentChange?.();
 
             this.showNotification("Pasted from Clipboard");
         } catch (err) {

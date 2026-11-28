@@ -1,9 +1,11 @@
 
 export class GridOverview {
-    constructor(elementId, bookManager, historyManager) {
+    constructor(elementId, bookManager, historyManager, spellChecker = null, settingsManager = null) {
         this.container = document.getElementById(elementId);
         this.bookManager = bookManager;
         this.historyManager = historyManager; // Store it
+        this.spellChecker = spellChecker;
+        this.settingsManager = settingsManager;
         this.cursor = { x: 0, y: 0 };
         this.zoomLevel = 1.0;
         this.minZoom = 0.2;
@@ -44,6 +46,11 @@ export class GridOverview {
     deactivate() {
         this.isActive = false;
         this.container.style.display = 'none';
+    }
+
+    setSpellDependencies(spellChecker, settingsManager) {
+        this.spellChecker = spellChecker;
+        this.settingsManager = settingsManager;
     }
 
     setZoom(level) {
@@ -162,9 +169,24 @@ export class GridOverview {
                 el.style.marginTop = `-${this.PART_HEIGHT / 2}px`;
 
                 if (part) {
+                    const spellcheckEnabled = Boolean(this.settingsManager?.config?.spellcheck);
+                    const errorCount = (spellcheckEnabled && this.spellChecker)
+                        ? this.spellChecker.checkText(part.content || '').length
+                        : 0;
+
+                    if (errorCount > 0) {
+                        el.classList.add('has-spell-errors');
+                    }
+
+                    const escapeHtml = (str) => str
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+
                     el.innerHTML = `
-                        <div class="grid-part-thumb">${(part.content || "").substring(0, 100)}</div>
-                        <div class="grid-part-name">${part.name}</div>
+                        <div class="grid-part-thumb">${escapeHtml((part.content || "").substring(0, 100))}</div>
+                        <div class="grid-part-name">${escapeHtml(part.name || "")}</div>
+                        ${errorCount > 0 ? `<div class="grid-error-badge">${errorCount}</div>` : ''}
                     `;
                 } else {
                     el.className += ' grid-empty-slot';
